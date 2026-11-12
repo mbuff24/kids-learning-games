@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pizza Chef Party! 🍕🎲</title>
+  <style>
+    :root {
+      --red-check: #dc2626;
+      --cream-bg: #fffbeb;
+      --wood-border: #b45309;
+      --sauce-red: #ef4444;
+      --cheese-gold: #facc15;
+      --dough-tan: #fde68a;
+      --herb-green: #16a34a;
+      --text-dark: #292524;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Rounded Mplus 1c', system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      max-height: 100vh;
+      background-color: #fef2f2;
+      background-image:
+        linear-gradient(45deg, rgba(220, 38, 38, 0.08) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(220, 38, 38, 0.08) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(220, 38, 38, 0.08) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(220, 38, 38, 0.08) 75%);
+      background-size: 40px 40px;
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 250;
+    }
+
+    /* Header */
+    header {
+      width: 100%;
+      max-width: 1260px;
+      background: #ffffff;
+      border-bottom: 4px solid var(--red-check);
+      border-radius: 0 0 20px 20px;
+      padding: 6px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      color: #b91c1c;
+      text-shadow: 1px 1px 0 #fecaca;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .top-btn {
+      background: #fffbeb;
+      border: 2px solid #f59e0b;
+      border-radius: 50px;
+      padding: 4px 12px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #92400e;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #d97706;
+    }
+
+    .top-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #d97706;
+    }
+
+    /* Main Grid: Optimized for 13" MacBook Pro Widescreen */
+    main {
+      width: 100%;
+      max-width: 1260px;
+      flex: 1;
+      min-height: 0;
+      padding: 8px 14px;
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      grid-template-rows: 1fr auto;
+      gap: 8px 14px;
+      align-items: stretch;
+    }
+
+    .left-sidebar {
+      grid-column: 1;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    /* Live PizzaPans & Chef Cards */
+    .chefs-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .chef-card {
+      background: #ffffff;
+      border: 3px solid #cbd5e1;
+      border-radius: 18px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+
+    .chef-card.active-turn {
+      border-color: #ef4444;
+      background: #fffbeb;
+      transform: scale(1.02);
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.45);
+    }
+
+    .chef-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-weight: 900;
+      font-size: 0.92rem;
+      color: #1c1917;
+      width: 100%;
+    }
+
+    .chef-name-input {
+      width: 105px;
+      border: 2px dashed #fca5a5;
+      border-radius: 8px;
+      background: #fff5f5;
+      font-weight: 900;
+      font-size: 0.88rem;
+      color: #991b1b;
+      text-align: center;
+      padding: 2px 4px;
+      outline: none;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .chef-name-input:focus {
+      border-style: solid;
+      border-color: #dc2626;
+      background: #ffffff;
+    }
+
+    .chef-sub {
+      font-size: 0.72rem;
+      color: #57534e;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    /* Visual Live Pizza Canvas/SVG */
+    .pizza-pan {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: #78716c;
+      border: 4px solid #44403c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.35), 0 3px 6px rgba(0,0,0,0.15);
+      margin: 2px 0 4px;
+      overflow: hidden;
+    }
+
+    .pizza-dough {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background: #fde68a;
+      border: 5px solid #d97706;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s;
+    }
+
+    .pizza-sauce {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #dc2626;
+      position: absolute;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .pizza-sauce.has-sauce {
+      opacity: 0.9;
+    }
+
+    .pizza-cheese {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fef08a 60%, #facc15 100%);
+      position: absolute;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .pizza-cheese.has-cheese {
+      opacity: 0.95;
+    }
+
+    .pizza-topping-item {
+      position: absolute;
+      font-size: 0.95rem;
+      line-height: 1;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+      animation: popIn 0.25s ease-out;
+    }
+
+    .essentials-row {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      margin-bottom: 3px;
+    }
+
+    .ess-badge {
+      font-size: 0.65rem;
+      font-weight: 900;
+      padding: 1px 5px;
+      border-radius: 6px;
+      background: #f5f5f4;
+      color: #a8a29e;
+      border: 1px solid #d6d3d1;
+    }
+
+    .ess-badge.collected {
+      background: #dcfce7;
+      color: #15803d;
+      border-color: #22c55e;
+    }
+
+    .topping-count-pill {
+      font-size: 0.76rem;
+      font-weight: 900;
+      color: #b45309;
+      background: #fef3c7;
+      border: 1.5px solid #f59e0b;
+      border-radius: 10px;
+      padding: 1px 8px;
+    }
+
+    /* Interactive Dice & Addition Deck */
+    .control-deck {
+      width: 100%;
+      flex: 1;
+      background: #ffffff;
+      border: 4px solid #ef4444;
+      border-radius: 22px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      text-align: center;
+    }
+
+    .status-banner {
+      font-size: 0.98rem;
+      font-weight: 900;
+      color: #7f1d1d;
+      background: #fef2f2;
+      border: 2.5px solid #fca5a5;
+      border-radius: 16px;
+      padding: 6px 10px;
+      width: 100%;
+      line-height: 1.25;
+    }
+
+    .status-banner.good-news {
+      background: #dcfce7;
+      border-color: #22c55e;
+      color: #14532d;
+      animation: popIn 0.3s;
+    }
+
+    .status-banner.bad-news {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #991b1b;
+      animation: wiggle 0.4s;
+    }
+
+    .dice-arena {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 2px 0;
+    }
+
+    .die-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .die {
+      width: 60px;
+      height: 60px;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 3.5px solid #dc2626;
+      box-shadow: 0 4px 0 #991b1b, 0 5px 10px rgba(0,0,0,0.12);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 6px;
+      gap: 3px;
+      cursor: pointer;
+    }
+
+    .die.rolling {
+      animation: shakeDie 0.35s infinite;
+    }
+
+    @keyframes shakeDie {
+      0% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-12deg) scale(1.06); }
+      50% { transform: rotate(10deg) scale(0.95); }
+      75% { transform: rotate(-8deg) scale(1.04); }
+      100% { transform: rotate(0deg) scale(1); }
+    }
+
+    .pip {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #1c1917;
+      transform: scale(0.85);
+      transition: transform 0.15s, background 0.15s;
+    }
+
+    .pip.countable {
+      cursor: pointer;
+      animation: pulsePip 1s infinite alternate;
+    }
+
+    .pip.counted {
+      background: #16a34a !important;
+      transform: scale(1.18);
+      box-shadow: 0 0 6px #22c55e;
+      animation: none;
+    }
+
+    @keyframes pulsePip {
+      0% { transform: scale(0.76); }
+      100% { transform: scale(1.02); }
+    }
+
+    .die-num-label {
+      font-size: 0.9rem;
+      font-weight: 900;
+      color: #b91c1c;
+    }
+
+    .math-symbol {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #dc2626;
+    }
+
+    .sum-box {
+      min-width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      border: 3.5px dashed #dc2626;
+      background: #fff5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #16a34a;
+      padding: 0 8px;
+    }
+
+    .sum-box.filled {
+      border-style: solid;
+      border-color: #16a34a;
+      background: #dcfce7;
+    }
+
+    .action-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      width: 100%;
+    }
+
+    .helper-hint {
+      margin: 0;
+      font-size: 0.82rem;
+      font-weight: bold;
+      color: #57534e;
+    }
+
+    .roll-btn {
+      background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+      border: 3px solid #dcfce7;
+      border-radius: 50px;
+      padding: 8px 26px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #15803d;
+    }
+
+    .roll-btn:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #15803d;
+    }
+
+    .roll-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .choices-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .choice-btn {
+      min-width: 56px;
+      height: 48px;
+      border-radius: 14px;
+      border: 3.5px solid #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 1.4rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #1d4ed8;
+    }
+
+    .choice-btn.correct {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #15803d;
+      box-shadow: 0 4px 0 #15803d;
+    }
+
+    .choice-btn.wrong {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #b91c1c;
+      box-shadow: 0 4px 0 #b91c1c;
+      animation: wiggle 0.35s;
+    }
+
+    @keyframes wiggle {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.6); }
+      100% { transform: scale(1); }
+    }
+
+    /* 40-Space Kitchen Board (8 columns x 5 rows) */
+    .board-map {
+      grid-column: 2;
+      grid-row: 1;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      background: #78350f;
+      border: 5px solid #b45309;
+      border-radius: 22px;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 6px;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.22), inset 0 0 18px rgba(0,0,0,0.35);
+    }
+
+    .space-tile {
+      position: relative;
+      min-height: 0;
+      background: #fffbeb;
+      border: 2.5px solid #fcd34d;
+      border-radius: 12px;
+      padding: 3px 5px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 3px 0 rgba(0,0,0,0.22);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .space-tile.ingredient-tile {
+      background: #f0fdf4;
+      border-color: #4ade80;
+    }
+
+    .space-tile.feast-tile {
+      background: #fef9c3;
+      border-color: #eab308;
+    }
+
+    .space-tile.lose-tile {
+      background: #fef2f2;
+      border-color: #f87171;
+    }
+
+    .space-tile.empty-tile {
+      background: #f5f5f4;
+      border-color: #d6d3d1;
+    }
+
+    .space-tile.oven-tile {
+      background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+      border-color: #ea580c;
+      box-shadow: 0 0 14px rgba(234, 88, 12, 0.7), 0 3px 0 #9a3412;
+    }
+
+    .space-tile.highlight-hop {
+      transform: scale(1.08);
+      box-shadow: 0 0 18px #facc15;
+      z-index: 5;
+    }
+
+    .tile-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .space-num {
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 6px;
+      padding: 0 4px;
+      font-weight: 900;
+      font-size: 0.68rem;
+      color: #292524;
+    }
+
+    .space-tag {
+      font-size: 0.55rem;
+      font-weight: 900;
+      padding: 1px 4px;
+      border-radius: 5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .ingredient-tile .space-tag { background: #16a34a; color: white; }
+    .feast-tile .space-tag { background: #ca8a04; color: white; }
+    .lose-tile .space-tag { background: #dc2626; color: white; }
+    .empty-tile .space-tag { background: #78716c; color: white; }
+    .oven-tile .space-tag { background: #ea580c; color: white; }
+
+    .tile-art {
+      text-align: center;
+      font-size: clamp(1.75rem, 2.8vw, 2.35rem);
+      line-height: 1;
+      margin: 2px 0;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15));
+    }
+
+    .tokens-rack {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      min-height: 28px;
+      z-index: 3;
+    }
+
+    .token {
+      font-size: clamp(1.55rem, 2.3vw, 1.95rem);
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+      position: relative;
+    }
+
+    .token.hop {
+      animation: bounceHop 0.3s ease-in-out;
+    }
+
+    .token-label {
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.45rem;
+      font-weight: 900;
+      padding: 0 3px;
+      border-radius: 4px;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .token.c1 .token-label { background: #dc2626; }
+    .token.c2 .token-label { background: #2563eb; }
+
+    @keyframes bounceHop {
+      0% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-12px) scale(1.25); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    /* Legend Footer */
+    .legend-bar {
+      grid-column: 2;
+      grid-row: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      background: #ffffff;
+      border: 2px solid #fca5a5;
+      padding: 5px 14px;
+      border-radius: 18px;
+      font-weight: bold;
+      font-size: 0.78rem;
+    }
+
+    /* Judging / Winner Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.68);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+      padding: 16px;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #fffbeb;
+      border: 7px solid #dc2626;
+      border-radius: 30px;
+      padding: 22px 26px;
+      max-width: 680px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+    }
+
+    .judge-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 14px 0;
+    }
+
+    .judge-col {
+      background: #ffffff;
+      border: 3px solid #fde68a;
+      border-radius: 20px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .judge-col.winner-col {
+      border-color: #16a34a;
+      background: #f0fdf4;
+      box-shadow: 0 0 20px rgba(22, 163, 74, 0.35);
+    }
+
+    .score-breakdown {
+      font-size: 0.85rem;
+      color: #44403c;
+      text-align: left;
+      width: 100%;
+      background: #fafaf9;
+      padding: 8px 10px;
+      border-radius: 12px;
+    }
+
+    .score-breakdown div {
+      display: flex;
+      justify-content: space-between;
+      margin: 2px 0;
+    }
+
+    .total-pts {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #b91c1c;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <header>
+    <div class="title-wrap">
+      <h1>🍕 Pizza Chef Party! 👩‍🍳👨‍🍳</h1>
+      <span id="round-pill" style="background:#fef2f2;border:2px solid #dc2626;color:#b91c1c;padding:3px 12px;border-radius:30px;font-weight:900;font-size:0.9rem;">
+        🕒 Round 1 of 8
+      </span>
+    </div>
+    <div class="header-controls">
+      <button class="top-btn" id="sound-btn" onclick="toggleSound()">🔊 Sound On</button>
+      <button class="top-btn" onclick="resetGame()">🔄 New Pizza Game</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="left-sidebar">
+      <!-- Both Players' Live Pizza Pans -->
+      <div class="chefs-panel">
+        <!-- Chef 1 -->
+        <div class="chef-card active-turn" id="card-c1">
+          <div class="chef-header">
+            <span>👩‍🍳</span>
+            <input type="text" class="chef-name-input" id="name-input-c1" value="Chef 1" maxlength="12" aria-label="Player 1 Name" oninput="updatePlayerName(0, this.value)" />
+          </div>
+          <div class="chef-sub" id="pos-c1">Space 1 / 40</div>
+          <div class="pizza-pan">
+            <div class="pizza-dough" id="pizza-c1">
+              <div class="pizza-sauce" id="sauce-c1"></div>
+              <div class="pizza-cheese" id="cheese-c1"></div>
+              <div id="toppings-layer-c1"></div>
+            </div>
+          </div>
+          <div class="essentials-row">
+            <span class="ess-badge collected">🫓 Dough</span>
+            <span class="ess-badge" id="ess-sauce-c1">🍅 Sauce</span>
+            <span class="ess-badge" id="ess-cheese-c1">🧀 Cheese</span>
+          </div>
+          <div class="topping-count-pill" id="count-c1">0 Toppings (10 pts)</div>
+        </div>
+
+        <!-- Chef 2 -->
+        <div class="chef-card" id="card-c2">
+          <div class="chef-header">
+            <span>👨‍🍳</span>
+            <input type="text" class="chef-name-input" id="name-input-c2" value="Chef 2" maxlength="12" aria-label="Player 2 Name" oninput="updatePlayerName(1, this.value)" />
+          </div>
+          <div class="chef-sub" id="pos-c2">Space 1 / 40</div>
+          <div class="pizza-pan">
+            <div class="pizza-dough" id="pizza-c2">
+              <div class="pizza-sauce" id="sauce-c2"></div>
+              <div class="pizza-cheese" id="cheese-c2"></div>
+              <div id="toppings-layer-c2"></div>
+            </div>
+          </div>
+          <div class="essentials-row">
+            <span class="ess-badge collected">🫓 Dough</span>
+            <span class="ess-badge" id="ess-sauce-c2">🍅 Sauce</span>
+            <span class="ess-badge" id="ess-cheese-c2">🧀 Cheese</span>
+          </div>
+          <div class="topping-count-pill" id="count-c2">0 Toppings (10 pts)</div>
+        </div>
+      </div>
+
+      <!-- Dice & Addition Control Box -->
+      <div class="control-deck">
+        <div class="status-banner" id="status-banner">
+          👩‍🍳 Chef 1's Turn! Roll the 2 dice and add them!
+        </div>
+
+        <div class="dice-arena" id="dice-arena"></div>
+
+        <div class="action-row">
+          <p class="helper-hint" id="helper-hint">Tap the green button (or tap a die) to roll!</p>
+          <button class="roll-btn" id="roll-btn" onclick="startTurnRoll()">🎲 Roll 2 Dice!</button>
+          <div class="choices-row" id="choices-row" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 40-Space Kitchen Board -->
+    <div class="board-map" id="board-map"></div>
+
+    <div class="legend-bar">
+      <span>🕒 <strong>8 Turns Each</strong></span>
+      <span>🎲 <strong>Doubles:</strong> Free Bonus Topping!</span>
+      <span>🟢 <strong>Ingredient Space:</strong> Sauce, Cheese, or Toppings!</span>
+      <span>🌟 <strong>Chef's Pantry:</strong> +2 Toppings!</span>
+      <span>⚪ <strong>Empty Space:</strong> No item</span>
+      <span>🔴 <strong>Oops! (🐭/🗑️):</strong> Lose 1 topping!</span>
+    </div>
+  </main>
+
+  <!-- Pizza Judging Modal -->
+  <div class="modal-overlay" id="judge-modal">
+    <div class="modal-card">
+      <h2 style="margin:0;font-size:1.9rem;color:#b91c1c;" id="winner-headline">🍕 THE PIZZAS ARE BAKED! 🍕</h2>
+      <p style="margin:4px 0 8px;font-weight:bold;color:#57534e;" id="winner-subline">Let's see who made the Best Pizza!</p>
+
+      <div class="judge-grid" id="judge-grid"></div>
+
+      <button class="roll-btn" onclick="resetGame()">🍕 Cook Another Pizza!</button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 40-SPACE LOOPING KITCHEN BOARD CONFIGURATION (8 Turns Each!)
+    // =========================================================================
+    const TOTAL_SPACES = 40;
+    const MAX_TURNS = 8;
+
+    // Ingredient types
+    const TOPPING_TYPES = [
+      { id: 'pepperoni', name: 'Pepperoni', icon: '🥩', tag: '+Pepperoni' },
+      { id: 'mushroom',  name: 'Mushrooms', icon: '🍄', tag: '+Mushroom' },
+      { id: 'pepper',    name: 'Bell Pepper', icon: '🫑', tag: '+Pepper' },
+      { id: 'olive',     name: 'Olives', icon: '🫒', tag: '+Olives' },
+      { id: 'pineapple', name: 'Pineapple', icon: '🍍', tag: '+Pineapple' },
+      { id: 'bacon',     name: 'Crispy Bacon', icon: '🥓', tag: '+Bacon' },
+      { id: 'onion',     name: 'Sweet Onion', icon: '🧅', tag: '+Onion' },
+      { id: 'basil',     name: 'Fresh Basil', icon: '🌿', tag: '+Basil' }
+    ];
+
+    const boardSpaces = [];
+    function buildSpaceDefinitions() {
+      boardSpaces.length = 0;
+      const loseSpaces = new Set([6, 12, 19, 25, 31, 36]);
+      const emptySpaces = new Set([4, 9, 15, 22, 28, 34]);
+      const feastSpaces = new Set([10, 20, 30, 40]);
+      const sauceSpaces = new Set([2, 8, 17, 27, 35]);
+      const cheeseSpaces = new Set([3, 11, 18, 29, 38]);
+
+      let topIdx = 0;
+      for (let s = 1; s <= TOTAL_SPACES; s++) {
+        if (s === 1) {
+          boardSpaces.push({ s, type: 'start', icon: '🫓', tag: 'START', label: 'Pizza Prep Table!' });
+        } else if (loseSpaces.has(s)) {
+          const isMouse = s % 2 === 0;
+          boardSpaces.push({
+            s,
+            type: 'lose',
+            icon: isMouse ? '🐭' : '🗑️',
+            tag: '-1 ITEM',
+            label: isMouse ? 'Sneaky Mouse nibbled a topping!' : 'Oops! Dropped a topping on the floor!'
+          });
+        } else if (emptySpaces.has(s)) {
+          const icons = ['🍽️', '🧻', '🔪', '🥣'];
+          boardSpaces.push({
+            s,
+            type: 'empty',
+            icon: icons[s % icons.length],
+            tag: 'EMPTY',
+            label: 'Just a clean kitchen counter — no ingredient here!'
+          });
+        } else if (feastSpaces.has(s)) {
+          boardSpaces.push({
+            s,
+            type: 'feast',
+            icon: '🧺✨',
+            tag: '+2 ITEMS!',
+            label: 'Chef’s Secret Pantry! Collect 2 toppings!'
+          });
+        } else if (sauceSpaces.has(s)) {
+          boardSpaces.push({
+            s,
+            type: 'sauce',
+            icon: '🍅',
+            tag: '+SAUCE',
+            label: 'Tangy Tomato Sauce!'
+          });
+        } else if (cheeseSpaces.has(s)) {
+          boardSpaces.push({
+            s,
+            type: 'cheese',
+            icon: '🧀',
+            tag: '+CHEESE',
+            label: 'Melty Mozzarella Cheese!'
+          });
+        } else {
+          const t = TOPPING_TYPES[topIdx % TOPPING_TYPES.length];
+          topIdx++;
+          boardSpaces.push({
+            s,
+            type: 'topping',
+            topping: t,
+            icon: t.icon,
+            tag: t.tag,
+            label: `Fresh ${t.name}!`
+          });
+        }
+      }
+    }
+
+    function getGridCoords(spaceNum) {
+      const idx = spaceNum - 1; // 0..39
+      const row = Math.floor(idx / 8) + 1; // 1..5
+      const offset = idx % 8; // 0..7
+      const col = (row % 2 === 1) ? (offset + 1) : (8 - offset);
+      return { row, col };
+    }
+
+    // =========================================================================
+    // STATE
+    // =========================================================================
+    let chefs = [];
+    let currentTurn = 0;
+    let gameState = 'IDLE'; // IDLE, ROLLING, MATH, MOVING, GAME_OVER
+    let die1 = 1;
+    let die2 = 1;
+    let countedPips = 0;
+    let soundEnabled = true;
+
+    const boardMapEl = document.getElementById('board-map');
+    const statusBanner = document.getElementById('status-banner');
+    const diceArena = document.getElementById('dice-arena');
+    const helperHint = document.getElementById('helper-hint');
+    const rollBtn = document.getElementById('roll-btn');
+    const choicesRow = document.getElementById('choices-row');
+    const judgeModal = document.getElementById('judge-modal');
+
+    // =========================================================================
+    // AUDIO & SPEECH
+    // =========================================================================
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.12, vol = 0.2) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(vol, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playCollectSound() {
+      [523.25, 659.25, 783.99].forEach((f, i) => {
+        setTimeout(() => playTone(f, 'triangle', 0.14, 0.24), i * 80);
+      });
+    }
+
+    function playLoseSound() {
+      [370, 300, 230].forEach((f, i) => {
+        setTimeout(() => playTone(f, 'sawtooth', 0.15, 0.2), i * 100);
+      });
+    }
+
+    function speak(text) {
+      if (!soundEnabled || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        setTimeout(() => {
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'en-US';
+          u.rate = 0.95;
+          window.speechSynthesis.speak(u);
+        }, 30);
+      } catch (e) {}
+    }
+
+    window.toggleSound = function() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-btn').textContent = soundEnabled ? '🔊 Sound On' : '🔇 Muted';
+      if (!soundEnabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    };
+
+    // =========================================================================
+    // PIZZA SCORE CALCULATION & VISUAL RENDERING
+    // =========================================================================
+    function calculatePizzaScore(chef) {
+      const basePts = 10; // Fresh Dough
+      const saucePts = chef.hasSauce ? 15 : 0;
+      const cheesePts = chef.hasCheese ? 15 : 0;
+      const toppingPts = chef.toppings.length * 10;
+      const uniqueTypes = new Set(chef.toppings.map(t => t.id)).size;
+      const varietyBonus = uniqueTypes >= 3 ? 15 : (uniqueTypes * 3);
+      const firstToOvenPts = chef.firstToOven ? 10 : 0;
+      const total = basePts + saucePts + cheesePts + toppingPts + varietyBonus + firstToOvenPts;
+      return { basePts, saucePts, cheesePts, toppingPts, uniqueTypes, varietyBonus, firstToOvenPts, total };
+    }
+
+    // Pre-computed ring coordinates inside the 84x84 pizza circle so toppings scatter naturally
+    const toppingCoords = [
+      { x: 24, y: 18 }, { x: 46, y: 18 }, { x: 16, y: 38 }, { x: 52, y: 38 },
+      { x: 26, y: 54 }, { x: 46, y: 52 }, { x: 35, y: 34 }, { x: 34, y: 14 },
+      { x: 18, y: 26 }, { x: 50, y: 26 }, { x: 20, y: 48 }, { x: 36, y: 56 }
+    ];
+
+    function updateChefUICards() {
+      const currentRound = Math.min(MAX_TURNS, Math.min(...chefs.map(c => c.turnsTaken)) + 1);
+      const roundPill = document.getElementById('round-pill');
+      if (roundPill) {
+        roundPill.textContent = gameState === 'GAME_OVER'
+          ? `🔥 Bake-Off Complete!`
+          : `🕒 Round ${currentRound} of ${MAX_TURNS}`;
+      }
+
+      chefs.forEach((c, idx) => {
+        const card = document.getElementById(`card-${c.id}`);
+        card.classList.toggle('active-turn', idx === currentTurn && gameState !== 'GAME_OVER');
+        const turnsLeft = MAX_TURNS - c.turnsTaken;
+        document.getElementById(`pos-${c.id}`).textContent =
+          `Turn ${c.turnsTaken}/${MAX_TURNS} (${turnsLeft} left) • Space ${c.pos}`;
+
+        document.getElementById(`sauce-${c.id}`).classList.toggle('has-sauce', c.hasSauce);
+        document.getElementById(`cheese-${c.id}`).classList.toggle('has-cheese', c.hasCheese);
+        document.getElementById(`ess-sauce-${c.id}`).classList.toggle('collected', c.hasSauce);
+        document.getElementById(`ess-cheese-${c.id}`).classList.toggle('collected', c.hasCheese);
+
+        const layer = document.getElementById(`toppings-layer-${c.id}`);
+        layer.innerHTML = '';
+        c.toppings.forEach((t, tIdx) => {
+          const pos = toppingCoords[tIdx % toppingCoords.length];
+          const span = document.createElement('span');
+          span.className = 'pizza-topping-item';
+          span.style.left = `${pos.x}px`;
+          span.style.top = `${pos.y}px`;
+          span.textContent = t.icon;
+          layer.appendChild(span);
+        });
+
+        const score = calculatePizzaScore(c);
+        document.getElementById(`count-${c.id}`).textContent =
+          `${c.toppings.length} Toppings (${score.total} pts)`;
+      });
+    }
+
+    // =========================================================================
+    // BOARD RENDERING
+    // =========================================================================
+    function renderBoard() {
+      boardMapEl.innerHTML = '';
+      boardSpaces.forEach(sp => {
+        const { row, col } = getGridCoords(sp.s);
+        const tile = document.createElement('div');
+        tile.id = `space-${sp.s}`;
+
+        let typeClass = 'ingredient-tile';
+        if (sp.type === 'lose') typeClass = 'lose-tile';
+        else if (sp.type === 'empty') typeClass = 'empty-tile';
+        else if (sp.type === 'feast') typeClass = 'feast-tile';
+        else if (sp.type === 'oven') typeClass = 'oven-tile';
+
+        tile.className = `space-tile ${typeClass}`;
+        tile.style.gridRow = row;
+        tile.style.gridColumn = col;
+
+        tile.innerHTML = `
+          <div class="tile-top">
+            <span class="space-num">${sp.s}</span>
+            <span class="space-tag">${sp.tag}</span>
+          </div>
+          <div class="tile-art">${sp.icon}</div>
+          <div class="tokens-rack" id="rack-${sp.s}"></div>
+        `;
+        boardMapEl.appendChild(tile);
+      });
+    }
+
+    function renderTokens(hopId = null) {
+      for (let s = 1; s <= TOTAL_SPACES; s++) {
+        const r = document.getElementById(`rack-${s}`);
+        if (r) r.innerHTML = '';
+      }
+      chefs.forEach(c => {
+        const r = document.getElementById(`rack-${c.pos}`);
+        if (!r) return;
+        const tok = document.createElement('div');
+        tok.className = `token ${c.id} ${hopId === c.id ? 'hop' : ''}`;
+        tok.innerHTML = `${c.icon}<span class="token-label">${c.shortName}</span>`;
+        r.appendChild(tok);
+      });
+      updateChefUICards();
+    }
+
+    // =========================================================================
+    // DICE & INTERACTIVE ADDITION
+    // =========================================================================
+    const pipPositions = {
+      1: [4],
+      2: [0, 8],
+      3: [0, 4, 8],
+      4: [0, 2, 6, 8],
+      5: [0, 2, 4, 6, 8],
+      6: [0, 2, 3, 5, 6, 8]
+    };
+
+    function createDieEl(val, countable, rolling) {
+      const die = document.createElement('div');
+      die.className = 'die' + (rolling ? ' rolling' : '');
+      const active = pipPositions[val] || [];
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        if (active.includes(i)) {
+          const pip = document.createElement('div');
+          pip.className = 'pip' + (countable ? ' countable' : '');
+          if (countable) {
+            pip.addEventListener('click', (e) => {
+              e.stopPropagation();
+              onPipTapped(pip);
+            });
+          }
+          cell.appendChild(pip);
+        }
+        die.appendChild(cell);
+      }
+      die.addEventListener('click', () => {
+        if (gameState === 'IDLE') startTurnRoll();
+      });
+      return die;
+    }
+
+    function renderDice(v1, v2, countable = false, rolling = false, sumVal = '?') {
+      diceArena.innerHTML = '';
+
+      const w1 = document.createElement('div');
+      w1.className = 'die-wrapper';
+      w1.appendChild(createDieEl(v1, countable, rolling));
+      const l1 = document.createElement('div');
+      l1.className = 'die-num-label';
+      l1.textContent = rolling ? '?' : v1;
+      w1.appendChild(l1);
+
+      const plus = document.createElement('div');
+      plus.className = 'math-symbol';
+      plus.textContent = '+';
+
+      const w2 = document.createElement('div');
+      w2.className = 'die-wrapper';
+      w2.appendChild(createDieEl(v2, countable, rolling));
+      const l2 = document.createElement('div');
+      l2.className = 'die-num-label';
+      l2.textContent = rolling ? '?' : v2;
+      w2.appendChild(l2);
+
+      const eq = document.createElement('div');
+      eq.className = 'math-symbol';
+      eq.textContent = '=';
+
+      const sb = document.createElement('div');
+      sb.className = 'sum-box' + (sumVal !== '?' ? ' filled' : '');
+      sb.id = 'sum-box';
+      sb.textContent = sumVal;
+
+      diceArena.append(w1, plus, w2, eq, sb);
+    }
+
+    function onPipTapped(pip) {
+      if (gameState !== 'MATH') return;
+      if (pip.classList.contains('counted')) return;
+      pip.classList.add('counted');
+      countedPips++;
+      playTone(330 + countedPips * 40, 'sine', 0.12, 0.22);
+      speak(String(countedPips));
+      const total = die1 + die2;
+      if (countedPips === total) {
+        helperHint.textContent = `You counted all ${total} dots! Now tap ${total}!`;
+      } else {
+        helperHint.textContent = `Counted ${countedPips} dots... keep tapping!`;
+      }
+    }
+
+    window.startTurnRoll = async function() {
+      if (gameState !== 'IDLE') return;
+      const chef = chefs[currentTurn];
+      gameState = 'ROLLING';
+      rollBtn.disabled = true;
+      countedPips = 0;
+      statusBanner.className = 'status-banner';
+      statusBanner.textContent = `${chef.icon} ${chef.name} is rolling the 2 dice...`;
+
+      for (let i = 0; i < 7; i++) {
+        renderDice(
+          Math.floor(Math.random() * 6) + 1,
+          Math.floor(Math.random() * 6) + 1,
+          false,
+          true,
+          '?'
+        );
+        playTone(250 + i * 30, 'triangle', 0.05, 0.12);
+        await sleep(65);
+      }
+
+      die1 = Math.floor(Math.random() * 6) + 1;
+      die2 = Math.floor(Math.random() * 6) + 1;
+      const sum = die1 + die2;
+      const isDoubles = die1 === die2;
+
+      renderDice(die1, die2, true, false, '?');
+
+      if (isDoubles) {
+        playCollectSound();
+        const freeTopping = giveRandomTopping(chef);
+        updateChefUICards();
+        statusBanner.className = 'status-banner good-news';
+        statusBanner.textContent = `🎲🎉 DOUBLES (${die1} & ${die2})! ${chef.name} gets a FREE ${freeTopping.icon} ${freeTopping.name}! Now what is ${die1} + ${die2}?`;
+        helperHint.textContent = `✨ Free topping added! Tap the dots or pick ${die1} + ${die2} below!`;
+        speak(`Doubles! ${chef.name} gets a free ${freeTopping.name}! Now what is ${die1} plus ${die2}?`);
+      } else {
+        statusBanner.textContent = `${chef.icon} ${chef.name}: What is ${die1} + ${die2}?`;
+        helperHint.textContent = `💡 Tap the dots on the dice to count them, then tap the answer!`;
+        speak(`${chef.name} rolled ${die1} and ${die2}. What is ${die1} plus ${die2}?`);
+      }
+
+      gameState = 'MATH';
+      showSumChoices(chef, sum);
+    };
+
+    function showSumChoices(chef, correctSum) {
+      rollBtn.style.display = 'none';
+      choicesRow.style.display = 'flex';
+      choicesRow.innerHTML = '';
+
+      const opts = new Set([correctSum]);
+      const diffs = [-2, -1, 1, 2, 3];
+      while (opts.size < 3) {
+        const d = diffs[Math.floor(Math.random() * diffs.length)];
+        const c = correctSum + d;
+        if (c >= 2 && c <= 12 && c !== correctSum) opts.add(c);
+      }
+
+      Array.from(opts).sort((a, b) => a - b).forEach(num => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = num;
+        btn.addEventListener('click', () => onChoicePicked(btn, chef, num, correctSum));
+        choicesRow.appendChild(btn);
+      });
+    }
+
+    async function onChoicePicked(btn, chef, chosen, correctSum) {
+      if (gameState !== 'MATH') return;
+
+      if (chosen === correctSum) {
+        gameState = 'MOVING';
+        btn.classList.add('correct');
+        const sb = document.getElementById('sum-box');
+        if (sb) {
+          sb.textContent = correctSum;
+          sb.classList.add('filled');
+        }
+        document.querySelectorAll('.pip').forEach(p => p.classList.add('counted'));
+
+        playTone(587.33, 'sine', 0.12, 0.24);
+        setTimeout(() => playTone(880, 'sine', 0.2, 0.24), 100);
+
+        statusBanner.textContent = `Bellissimo! ${die1} + ${die2} = ${correctSum}! Moving ${correctSum} spaces!`;
+        await sleep(650);
+        choicesRow.style.display = 'none';
+        await moveChef(chef, correctSum);
+      } else {
+        btn.classList.add('wrong');
+        playTone(190, 'sawtooth', 0.18, 0.18);
+        helperHint.textContent = `Not ${chosen}! Tap each dot on the dice to count them all!`;
+        setTimeout(() => btn.classList.remove('wrong'), 450);
+      }
+    }
+
+    async function moveChef(chef, steps) {
+      for (let i = 1; i <= steps; i++) {
+        chef.pos = (chef.pos % TOTAL_SPACES) + 1;
+        const tile = document.getElementById(`space-${chef.pos}`);
+        if (tile) tile.classList.add('highlight-hop');
+        renderTokens(chef.id);
+        playTone(380 + i * 28, 'sine', 0.09, 0.2);
+        statusBanner.textContent = `${chef.icon} ${chef.name} hops... ${i} of ${steps} (Space ${chef.pos})`;
+        await sleep(290);
+        if (tile) tile.classList.remove('highlight-hop');
+      }
+
+      // Mark turn completed for this chef
+      chef.turnsTaken++;
+
+      // Resolve Space Landed On!
+      await resolveSpaceEffect(chef, boardSpaces[chef.pos - 1]);
+
+      // Check if both chefs have completed all 8 turns!
+      if (chefs.every(c => c.turnsTaken >= MAX_TURNS)) {
+        triggerPizzaJudging();
+        return;
+      }
+
+      // Switch to next chef
+      currentTurn = (currentTurn + 1) % chefs.length;
+      const nextChef = chefs[currentTurn];
+      gameState = 'IDLE';
+      updateChefUICards();
+      statusBanner.className = 'status-banner';
+      statusBanner.textContent = `${nextChef.icon} ${nextChef.name}'s Turn (Turn ${nextChef.turnsTaken + 1} of ${MAX_TURNS})! Roll the 2 dice!`;
+      helperHint.textContent = `Tap the green button (or tap a die) to roll!`;
+      rollBtn.style.display = 'inline-block';
+      rollBtn.disabled = false;
+      renderDice(die1, die2, false, false, '?');
+    }
+
+    function giveRandomTopping(chef) {
+      const pick = TOPPING_TYPES[Math.floor(Math.random() * TOPPING_TYPES.length)];
+      chef.toppings.push(pick);
+      return pick;
+    }
+
+    async function resolveSpaceEffect(chef, sp) {
+      await sleep(200);
+
+      if (sp.type === 'oven') {
+        chef.finished = true;
+        playCollectSound();
+        statusBanner.className = 'status-banner good-news';
+        if (!chefs.some(c => c !== chef && c.firstToOven)) {
+          chef.firstToOven = true;
+          const bonus = giveRandomTopping(chef);
+          statusBanner.textContent = `🔥 ${chef.name} reached the Pizza Oven FIRST! +10 First-Baker Bonus & +1 ${bonus.icon} ${bonus.name}!`;
+          speak(`${chef.name} reached the pizza oven first and gets a bonus topping!`);
+        } else {
+          statusBanner.textContent = `🔥 ${chef.name} reached the Pizza Oven! Time to judge the pizzas!`;
+          speak(`Both pizzas are in the oven! Let's see who made the best pizza!`);
+        }
+        updateChefUICards();
+        await sleep(1450);
+      } else if (sp.type === 'sauce') {
+        playCollectSound();
+        statusBanner.className = 'status-banner good-news';
+        if (!chef.hasSauce) {
+          chef.hasSauce = true;
+          statusBanner.textContent = `🍅 Mamma Mia! ${chef.name} spread Tangy Tomato Sauce on the pizza! (+15 pts)`;
+          speak(`${chef.name} collected tomato sauce!`);
+        } else {
+          const extra = giveRandomTopping(chef);
+          statusBanner.textContent = `🍅 Already have Sauce! ${chef.name} grabs extra ${extra.icon} ${extra.name} instead! (+10 pts)`;
+          speak(`Extra ${extra.name} added to the pizza!`);
+        }
+        updateChefUICards();
+        await sleep(1300);
+      } else if (sp.type === 'cheese') {
+        playCollectSound();
+        statusBanner.className = 'status-banner good-news';
+        if (!chef.hasCheese) {
+          chef.hasCheese = true;
+          statusBanner.textContent = `🧀 Yum! ${chef.name} sprinkled Melty Mozzarella Cheese on the pizza! (+15 pts)`;
+          speak(`${chef.name} collected mozzarella cheese!`);
+        } else {
+          const extra = giveRandomTopping(chef);
+          statusBanner.textContent = `🧀 Already have Cheese! ${chef.name} grabs extra ${extra.icon} ${extra.name} instead! (+10 pts)`;
+          speak(`Extra ${extra.name} added to the pizza!`);
+        }
+        updateChefUICards();
+        await sleep(1300);
+      } else if (sp.type === 'topping') {
+        playCollectSound();
+        chef.toppings.push(sp.topping);
+        statusBanner.className = 'status-banner good-news';
+        statusBanner.textContent = `${sp.topping.icon} Delicious! ${chef.name} added ${sp.topping.name} to the pizza! (+10 pts)`;
+        speak(`${chef.name} added ${sp.topping.name}!`);
+        updateChefUICards();
+        await sleep(1250);
+      } else if (sp.type === 'feast') {
+        playCollectSound();
+        const t1 = giveRandomTopping(chef);
+        const t2 = giveRandomTopping(chef);
+        statusBanner.className = 'status-banner good-news';
+        statusBanner.textContent = `🧺 Chef's Pantry! ${chef.name} gets TWO toppings: ${t1.icon} ${t1.name} & ${t2.icon} ${t2.name}!`;
+        speak(`Jackpot! ${chef.name} collected ${t1.name} and ${t2.name}!`);
+        updateChefUICards();
+        await sleep(1400);
+      } else if (sp.type === 'lose') {
+        playLoseSound();
+        statusBanner.className = 'status-banner bad-news';
+        if (chef.toppings.length > 0) {
+          const lost = chef.toppings.pop();
+          statusBanner.textContent = `${sp.icon} Oh no! ${sp.label} ${chef.name} lost ${lost.icon} ${lost.name}!`;
+          speak(`Oh no! ${chef.name} lost ${lost.name}!`);
+        } else {
+          statusBanner.textContent = `${sp.icon} ${sp.label} (Luckily ${chef.name} had no toppings to lose!)`;
+          speak(`Whew! No toppings lost!`);
+        }
+        updateChefUICards();
+        await sleep(1350);
+      } else if (sp.type === 'empty') {
+        playTone(300, 'sine', 0.1, 0.12);
+        statusBanner.textContent = `${sp.icon} ${sp.label}`;
+        await sleep(1000);
+      }
+    }
+
+    function triggerPizzaJudging() {
+      gameState = 'GAME_OVER';
+      const s1 = calculatePizzaScore(chefs[0]);
+      const s2 = calculatePizzaScore(chefs[1]);
+
+      const headline = document.getElementById('winner-headline');
+      const subline = document.getElementById('winner-subline');
+      const grid = document.getElementById('judge-grid');
+
+      let winnerIdx = -1;
+      if (s1.total > s2.total) {
+        winnerIdx = 0;
+        headline.textContent = `🏆 ${chefs[0].icon} ${chefs[0].name.toUpperCase()} WINS BEST PIZZA! 🍕`;
+        subline.textContent = `${chefs[0].name} baked a ${s1.total}-point Masterpiece Pizza!`;
+        speak(`Hooray! ${chefs[0].name} wins the Best Pizza award with ${s1.total} points!`);
+      } else if (s2.total > s1.total) {
+        winnerIdx = 1;
+        headline.textContent = `🏆 ${chefs[1].icon} ${chefs[1].name.toUpperCase()} WINS BEST PIZZA! 🍕`;
+        subline.textContent = `${chefs[1].name} baked a ${s2.total}-point Masterpiece Pizza!`;
+        speak(`Hooray! ${chefs[1].name} wins the Best Pizza award with ${s2.total} points!`);
+      } else {
+        headline.textContent = `🏆 IT'S A DELICIOUS TIE! 🍕`;
+        subline.textContent = `Both Chefs scored ${s1.total} points! Everyone eats great pizza!`;
+        speak(`It is a tie! Both chefs made an amazing ${s1.total} point pizza!`);
+      }
+
+      const scores = [s1, s2];
+      grid.innerHTML = chefs.map((c, idx) => {
+        const sc = scores[idx];
+        const isWin = winnerIdx === idx || winnerIdx === -1;
+        const toppingsIcons = c.toppings.map(t => t.icon).join(' ') || 'None';
+        return `
+          <div class="judge-col ${isWin ? 'winner-col' : ''}">
+            <div style="font-size:1.25rem;font-weight:900;">${c.icon} ${c.name} ${isWin ? '👑' : ''}</div>
+            <div style="font-size:0.85rem;font-weight:bold;color:#57534e;">Toppings: ${toppingsIcons}</div>
+            <div class="score-breakdown">
+              <div><span>🫓 Fresh Dough:</span> <strong>+${sc.basePts}</strong></div>
+              <div><span>🍅 Tomato Sauce:</span> <strong>+${sc.saucePts}</strong></div>
+              <div><span>🧀 Mozzarella Cheese:</span> <strong>+${sc.cheesePts}</strong></div>
+              <div><span>🍄 ${c.toppings.length} Toppings:</span> <strong>+${sc.toppingPts}</strong></div>
+              <div><span>🌈 Variety Bonus (${sc.uniqueTypes} types):</span> <strong>+${sc.varietyBonus}</strong></div>
+              ${sc.firstToOvenPts ? `<div><span>🔥 First to Oven:</span> <strong>+${sc.firstToOvenPts}</strong></div>` : ''}
+            </div>
+            <div class="total-pts">${sc.total} Points</div>
+          </div>
+        `;
+      }).join('');
+
+      startConfetti();
+      setTimeout(() => judgeModal.classList.add('show'), 400);
+    }
+
+    window.updatePlayerName = function(idx, newName) {
+      if (!chefs[idx]) return;
+      const clean = newName.trim() || `Chef ${idx + 1}`;
+      chefs[idx].name = clean;
+      chefs[idx].shortName = clean.slice(0, 8).toUpperCase();
+      renderTokens();
+      if (gameState === 'IDLE' && currentTurn === idx) {
+        statusBanner.textContent = `${chefs[idx].icon} ${chefs[idx].name}'s Turn (Turn ${chefs[idx].turnsTaken + 1} of ${MAX_TURNS})! Roll the 2 dice!`;
+      }
+    };
+
+    window.resetGame = function() {
+      stopConfetti();
+      judgeModal.classList.remove('show');
+      buildSpaceDefinitions();
+      const name1 = (document.getElementById('name-input-c1')?.value || '').trim() || 'Chef 1';
+      const name2 = (document.getElementById('name-input-c2')?.value || '').trim() || 'Chef 2';
+      chefs = [
+        {
+          id: 'c1',
+          name: name1,
+          shortName: name1.slice(0, 8).toUpperCase(),
+          icon: '👩‍🍳',
+          pos: 1,
+          turnsTaken: 0,
+          hasSauce: false,
+          hasCheese: false,
+          toppings: [],
+          finished: false,
+          firstToOven: false
+        },
+        {
+          id: 'c2',
+          name: name2,
+          shortName: name2.slice(0, 8).toUpperCase(),
+          icon: '👨‍🍳',
+          pos: 1,
+          turnsTaken: 0,
+          hasSauce: false,
+          hasCheese: false,
+          toppings: [],
+          finished: false,
+          firstToOven: false
+        }
+      ];
+      currentTurn = 0;
+      gameState = 'IDLE';
+      countedPips = 0;
+
+      renderBoard();
+      renderTokens();
+      renderDice(3, 2, false, false, '?');
+
+      statusBanner.className = 'status-banner';
+      statusBanner.textContent = `👩‍🍳 ${chefs[0].name}'s Turn (Turn 1 of ${MAX_TURNS})! Roll the 2 dice to collect pizza ingredients!`;
+      helperHint.textContent = `Tap your name above to customize it, or tap the green button to roll!`;
+      choicesRow.style.display = 'none';
+      rollBtn.style.display = 'inline-block';
+      rollBtn.disabled = false;
+    };
+
+    function sleep(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+      if ((e.code === 'Space' || e.code === 'Enter') && gameState === 'IDLE') {
+        e.preventDefault();
+        startTurnRoll();
+      }
+    });
+
+    // =========================================================================
+    // CONFETTI
+    // =========================================================================
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let confettiAnim = null;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function startConfetti() {
+      const pieces = Array.from({ length: 85 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height,
+        size: 8 + Math.random() * 9,
+        vy: 2.5 + Math.random() * 4,
+        vx: -2 + Math.random() * 4,
+        color: ['#dc2626', '#facc15', '#16a34a', '#f97316', '#3b82f6'][Math.floor(Math.random() * 5)],
+        rot: Math.random() * 360
+      }));
+      function frame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+          p.y += p.vy;
+          p.x += p.vx;
+          p.rot += 4;
+          if (p.y > canvas.height) p.y = -20;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        });
+        confettiAnim = requestAnimationFrame(frame);
+      }
+      frame();
+    }
+
+    function stopConfetti() {
+      if (confettiAnim) cancelAnimationFrame(confettiAnim);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    resetGame();
+  </script>
+</body>
+</html>

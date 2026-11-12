@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Race to the Pirate Ship! 🦈🏴‍☠️</title>
+  <style>
+    :root {
+      --ocean-top: #0284c7;
+      --ocean-mid: #0369a1;
+      --ocean-deep: #0c4a6e;
+      --sand-light: #fef3c7;
+      --sand-border: #f59e0b;
+      --trap-bg: #fee2e2;
+      --trap-border: #ef4444;
+      --treasure-bg: #fef08a;
+      --treasure-border: #eab308;
+      --ship-bg: #dcfce7;
+      --ship-border: #16a34a;
+      --text-dark: #0f172a;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Rounded Mplus 1c', system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      max-height: 100vh;
+      background: radial-gradient(circle at 50% 20%, #38bdf8 0%, var(--ocean-top) 45%, var(--ocean-deep) 100%);
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    /* Header */
+    header {
+      width: 100%;
+      max-width: 1240px;
+      background: rgba(255, 255, 255, 0.94);
+      border-bottom: 4px solid #f59e0b;
+      border-radius: 0 0 20px 20px;
+      padding: 6px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      color: #0c4a6e;
+      text-shadow: 1px 1px 0 #bae6fd;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mode-switch {
+      display: flex;
+      background: #e0f2fe;
+      border: 2px solid #0284c7;
+      border-radius: 50px;
+      padding: 2px;
+      gap: 4px;
+    }
+
+    .mode-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-weight: 900;
+      font-size: 0.85rem;
+      color: #0369a1;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .mode-btn.active {
+      background: #0284c7;
+      color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .top-btn {
+      background: #fffbeb;
+      border: 2px solid #f59e0b;
+      border-radius: 50px;
+      padding: 4px 12px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #92400e;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #d97706;
+    }
+
+    .top-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #d97706;
+    }
+
+    /* Main Layout: Side-by-Side Optimized for 13" MacBook Pro (1280x800 / 1440x900) */
+    main {
+      width: 100%;
+      max-width: 1240px;
+      flex: 1;
+      min-height: 0;
+      padding: 10px 16px;
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      grid-template-rows: 1fr auto;
+      gap: 10px 14px;
+      align-items: stretch;
+    }
+
+    .left-sidebar {
+      grid-column: 1;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    /* Players Score & Dice Inventory Strip */
+    .scoreboard {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .player-card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 3px solid #cbd5e1;
+      border-radius: 16px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .player-card.active-turn {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      transform: scale(1.02);
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.7);
+    }
+
+    .p-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .p-avatar {
+      font-size: 1.65rem;
+      line-height: 1;
+    }
+
+    .p-name {
+      font-weight: 900;
+      font-size: 0.95rem;
+      color: #0f172a;
+    }
+
+    .p-pos {
+      font-size: 0.78rem;
+      font-weight: bold;
+      color: #475569;
+    }
+
+    .p-dice-badge {
+      background: #dbeafe;
+      border: 2px solid #2563eb;
+      color: #1d4ed8;
+      padding: 3px 9px;
+      border-radius: 14px;
+      font-weight: 900;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .player-card.shark-card .p-dice-badge {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #b91c1c;
+    }
+
+    /* Interactive Control & Dice Deck */
+    .control-deck {
+      width: 100%;
+      flex: 1;
+      background: rgba(255, 255, 255, 0.96);
+      border: 4px solid #38bdf8;
+      border-radius: 22px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .status-banner {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: #0c4a6e;
+      background: #e0f2fe;
+      border: 3px solid #38bdf8;
+      border-radius: 20px;
+      padding: 8px 12px;
+      width: 100%;
+      line-height: 1.25;
+    }
+
+    .status-banner.trap-alert {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #991b1b;
+      animation: wiggle 0.45s;
+    }
+
+    .status-banner.treasure-alert {
+      background: #fef08a;
+      border-color: #eab308;
+      color: #854d0e;
+      animation: popIn 0.4s;
+    }
+
+    .dice-arena {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 4px 0;
+    }
+
+    .die-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .die {
+      width: clamp(58px, 9vw, 76px);
+      height: clamp(58px, 9vw, 76px);
+      background: #ffffff;
+      border-radius: 18px;
+      border: 4px solid #0284c7;
+      box-shadow: 0 5px 0 #0369a1, 0 6px 12px rgba(0,0,0,0.15);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 7px;
+      gap: 3px;
+      cursor: pointer;
+    }
+
+    .die.shark-die {
+      background: #fef2f2;
+      border-color: #dc2626;
+      box-shadow: 0 5px 0 #991b1b;
+    }
+
+    .die.bonus-die {
+      background: #fefce8;
+      border-color: #eab308;
+      box-shadow: 0 5px 0 #ca8a04;
+    }
+
+    .die.rolling {
+      animation: shakeDie 0.38s infinite;
+    }
+
+    @keyframes shakeDie {
+      0% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-12deg) scale(1.07); }
+      50% { transform: rotate(10deg) scale(0.95); }
+      75% { transform: rotate(-8deg) scale(1.04); }
+      100% { transform: rotate(0deg) scale(1); }
+    }
+
+    .pip {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #0f172a;
+      transform: scale(0.85);
+      transition: transform 0.18s, background 0.18s;
+    }
+
+    .shark-die .pip {
+      background: #dc2626;
+    }
+
+    .pip.countable {
+      cursor: pointer;
+      animation: pulsePip 1.1s infinite alternate;
+    }
+
+    .pip.counted {
+      background: #16a34a !important;
+      transform: scale(1.18);
+      box-shadow: 0 0 8px #22c55e;
+      animation: none;
+    }
+
+    @keyframes pulsePip {
+      0% { transform: scale(0.78); }
+      100% { transform: scale(1.02); }
+    }
+
+    .die-num-label {
+      font-size: 1rem;
+      font-weight: 900;
+      color: #0369a1;
+    }
+
+    .math-symbol {
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      font-weight: 900;
+      color: #0284c7;
+    }
+
+    .sum-box {
+      min-width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      border: 4px dashed #0284c7;
+      background: #f0f9ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+      font-weight: 900;
+      color: #16a34a;
+      padding: 0 10px;
+    }
+
+    .sum-box.filled {
+      border-style: solid;
+      border-color: #16a34a;
+      background: #dcfce7;
+    }
+
+    .action-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .helper-hint {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #475569;
+    }
+
+    .roll-btn {
+      background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+      border: 4px solid #dcfce7;
+      border-radius: 50px;
+      padding: 10px 32px;
+      font-size: clamp(1.15rem, 2.8vw, 1.55rem);
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #15803d, 0 8px 16px rgba(0,0,0,0.2);
+      transition: transform 0.1s;
+    }
+
+    .roll-btn:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #15803d;
+    }
+
+    .roll-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .choices-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .choice-btn {
+      min-width: 64px;
+      height: 56px;
+      border-radius: 18px;
+      border: 4px solid #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 1.65rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #1d4ed8;
+      padding: 0 14px;
+    }
+
+    .choice-btn.correct {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #15803d;
+      box-shadow: 0 5px 0 #15803d;
+    }
+
+    .choice-btn.wrong {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #b91c1c;
+      box-shadow: 0 5px 0 #b91c1c;
+      animation: wiggle 0.35s;
+    }
+
+    @keyframes wiggle {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.75); }
+      100% { transform: scale(1); }
+    }
+
+    /* 50-Space Snaking Pirate Map Board (10 columns x 5 rows) */
+    .board-map {
+      grid-column: 2;
+      grid-row: 1;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      background: rgba(12, 74, 110, 0.55);
+      border: 5px solid #38bdf8;
+      border-radius: 22px;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 6px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.3), inset 0 0 20px rgba(56, 189, 248, 0.25);
+    }
+
+    .space-tile {
+      position: relative;
+      min-height: 0;
+      background: var(--sand-light);
+      border: 2.5px solid var(--sand-border);
+      border-radius: 12px;
+      padding: 3px 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .space-tile.start-tile {
+      background: #e0f2fe;
+      border-color: #0284c7;
+    }
+
+    .space-tile.trap-tile {
+      background: var(--trap-bg);
+      border-color: var(--trap-border);
+    }
+
+    .space-tile.treasure-tile {
+      background: var(--treasure-bg);
+      border-color: var(--treasure-border);
+    }
+
+    .space-tile.ship-tile {
+      background: var(--ship-bg);
+      border-color: var(--ship-border);
+      box-shadow: 0 0 18px rgba(34, 197, 94, 0.65), 0 6px 0 #15803d;
+    }
+
+    .space-tile.highlight-hop {
+      transform: scale(1.07);
+      box-shadow: 0 0 22px #facc15;
+      z-index: 5;
+    }
+
+    .tile-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .space-num {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1.5px solid rgba(0,0,0,0.15);
+      border-radius: 8px;
+      padding: 0px 5px;
+      font-weight: 900;
+      font-size: 0.72rem;
+      color: #0f172a;
+    }
+
+    .space-type-tag {
+      font-size: 0.58rem;
+      font-weight: 900;
+      padding: 1px 4px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .trap-tile .space-type-tag {
+      background: #ef4444;
+      color: white;
+    }
+
+    .treasure-tile .space-type-tag {
+      background: #eab308;
+      color: #422006;
+    }
+
+    .ship-tile .space-type-tag {
+      background: #16a34a;
+      color: white;
+    }
+
+    .start-tile .space-type-tag {
+      background: #0284c7;
+      color: white;
+    }
+
+    .tile-art {
+      text-align: center;
+      font-size: 1.1rem;
+      line-height: 1;
+      opacity: 0.88;
+      margin: 0;
+    }
+
+    .tokens-rack {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2px;
+      min-height: 26px;
+      flex-wrap: wrap;
+      z-index: 3;
+    }
+
+    .token {
+      font-size: clamp(1.1rem, 1.8vw, 1.45rem);
+      line-height: 1;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35));
+      position: relative;
+      transition: transform 0.25s;
+    }
+
+    .token.hop {
+      animation: bounceHop 0.32s ease-in-out;
+    }
+
+    .token-label {
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.46rem;
+      font-weight: 900;
+      padding: 0px 3px;
+      border-radius: 4px;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .token.p1 .token-label { background: #2563eb; }
+    .token.p2 .token-label { background: #9333ea; }
+    .token.shark .token-label { background: #dc2626; }
+
+    @keyframes bounceHop {
+      0% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-14px) scale(1.25); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    /* Legend Footer */
+    .legend-bar {
+      grid-column: 2;
+      grid-row: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      background: rgba(255,255,255,0.92);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.82rem;
+    }
+
+    /* Winner Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 150;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+      padding: 16px;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #fffbeb;
+      border: 8px solid #f59e0b;
+      border-radius: 34px;
+      padding: 28px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+    }
+
+    .modal-icon {
+      font-size: 4.5rem;
+      margin-bottom: 8px;
+    }
+
+    .modal-title {
+      font-size: 2.1rem;
+      margin: 0 0 10px;
+      color: #0c4a6e;
+    }
+
+    .modal-desc {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #334155;
+      margin: 0 0 22px;
+    }
+
+    @media (max-width: 820px) {
+      body {
+        height: auto;
+        max-height: none;
+        overflow-y: auto;
+      }
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+      }
+      .left-sidebar {
+        grid-column: 1;
+        grid-row: 1;
+      }
+      .board-map {
+        grid-column: 1;
+        grid-row: 2;
+        gap: 6px;
+        padding: 8px;
+      }
+      .legend-bar {
+        grid-column: 1;
+        grid-row: 3;
+      }
+      .space-tile {
+        min-height: 82px;
+        padding: 4px;
+      }
+      .space-type-tag {
+        font-size: 0.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <header>
+    <div class="title-wrap">
+      <h1>🦈 Race to the Pirate Ship! 🏴‍☠️</h1>
+    </div>
+    <div class="header-controls">
+      <div class="mode-switch" title="Choose 1 or 2 Players">
+        <button class="mode-btn active" id="mode-1p" onclick="setPlayerCount(1)">1 Player vs 🦈</button>
+        <button class="mode-btn" id="mode-2p" onclick="setPlayerCount(2)">2 Players vs 🦈</button>
+      </div>
+      <button class="top-btn" id="sound-btn" onclick="toggleSound()">🔊 Sound On</button>
+      <button class="top-btn" onclick="resetGame()">🔄 New Race</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="left-sidebar">
+      <!-- Score & Dice Count Cards -->
+      <div class="scoreboard" id="scoreboard"></div>
+
+      <!-- Center Dice & Addition Bar -->
+      <div class="control-deck">
+        <div class="status-banner" id="status-banner">
+          Pirate 1's Turn! Roll your dice and add them up!
+        </div>
+
+        <div class="dice-arena" id="dice-arena"></div>
+
+        <div class="action-row">
+          <p class="helper-hint" id="helper-hint">Tap the green button (or tap a die) to roll!</p>
+          <button class="roll-btn" id="roll-btn" onclick="startTurnRoll()">🎲 Roll Dice!</button>
+          <div class="choices-row" id="choices-row" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 50-Space Winding Ocean Map -->
+    <div class="board-map" id="board-map"></div>
+
+    <div class="legend-bar">
+      <span>🏝️ <strong>Space 1:</strong> Start Island</span>
+      <span>💎 <strong>Treasure (+1 Die):</strong> Spaces 5, 13, 21, 29, 37, 44</span>
+      <span>🐙 <strong>Trap (Back to Space 1!):</strong> Spaces 9, 18, 26, 34, 42, 48</span>
+      <span>🏴‍☠️ <strong>Space 50:</strong> Pirate Ship Goal!</span>
+    </div>
+  </main>
+
+  <!-- Victory / Game Over Modal -->
+  <div class="modal-overlay" id="end-modal">
+    <div class="modal-card">
+      <div class="modal-icon" id="modal-icon">🏴‍☠️🏆</div>
+      <h2 class="modal-title" id="modal-title">YOU REACHED THE PIRATE SHIP!</h2>
+      <p class="modal-desc" id="modal-desc">Ahoy matey! You beat the shark to Space 50!</p>
+      <button class="roll-btn" onclick="resetGame()">🎲 Play Again!</button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // BOARD CONFIGURATION (50 Spaces in a Snaking 10x5 Grid)
+    // =========================================================================
+    const TOTAL_SPACES = 50;
+    const TREASURE_SPACES = new Set([5, 13, 21, 29, 37, 44]);
+    const TRAP_SPACES = new Set([9, 18, 26, 34, 42, 48]);
+    const MAX_DICE = 6; // Up to 6 dice on the 50-space map!
+
+    // Map space number (1..50) to 10x5 grid coordinates (snaking row by row)
+    // Row 1: 1..10 (left to right)
+    // Row 2: 20..11 (right to left)
+    // Row 3: 21..30 (left to right)
+    // Row 4: 40..31 (right to left)
+    // Row 5: 41..50 (left to right, ending at Space 50 Pirate Ship!)
+    function getGridCoords(spaceNum) {
+      const idx = spaceNum - 1; // 0..49
+      const row = Math.floor(idx / 10) + 1; // 1..5
+      const offset = idx % 10; // 0..9
+      const col = (row % 2 === 1) ? (offset + 1) : (10 - offset);
+      return { row, col };
+    }
+
+    const seaDecorPool = ['🐚', '🦀', '🐠', '🌊', '🐢', '⚓', '🐬', '🌴', '🦑', '🦜', '🧭', '🐳'];
+
+    // =========================================================================
+    // GAME STATE
+    // =========================================================================
+    let numHumanPlayers = 1;
+    let participants = [];
+    let currentTurnIdx = 0;
+    let gameState = 'IDLE'; // IDLE, ROLLING, MATH, MOVING, GAME_OVER
+    let currentRolls = [];
+    let countedPips = 0;
+    let soundEnabled = true;
+
+    const boardMapEl = document.getElementById('board-map');
+    const scoreboardEl = document.getElementById('scoreboard');
+    const statusBanner = document.getElementById('status-banner');
+    const diceArena = document.getElementById('dice-arena');
+    const helperHint = document.getElementById('helper-hint');
+    const rollBtn = document.getElementById('roll-btn');
+    const choicesRow = document.getElementById('choices-row');
+    const endModal = document.getElementById('end-modal');
+
+    // =========================================================================
+    // SOUND & VOICE SYNTHESIS
+    // =========================================================================
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.12, vol = 0.2) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(vol, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playTreasureSound() {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+        setTimeout(() => playTone(f, 'triangle', 0.16, 0.26), i * 95);
+      });
+    }
+
+    function playTrapSound() {
+      [400, 340, 280, 210].forEach((f, i) => {
+        setTimeout(() => playTone(f, 'sawtooth', 0.16, 0.22), i * 110);
+      });
+    }
+
+    function playSharkJawsSound() {
+      [140, 155, 140, 155].forEach((f, i) => {
+        setTimeout(() => playTone(f, 'sawtooth', 0.14, 0.24), i * 140);
+      });
+    }
+
+    function speak(text) {
+      if (!soundEnabled || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        setTimeout(() => {
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'en-US';
+          u.rate = 0.95;
+          window.speechSynthesis.speak(u);
+        }, 30);
+      } catch (e) {}
+    }
+
+    window.toggleSound = function() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-btn').textContent = soundEnabled ? '🔊 Sound On' : '🔇 Muted';
+      if (!soundEnabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    };
+
+    // =========================================================================
+    // SETUP PLAYERS & BOARD
+    // =========================================================================
+    window.setPlayerCount = function(count) {
+      numHumanPlayers = count;
+      document.getElementById('mode-1p').classList.toggle('active', count === 1);
+      document.getElementById('mode-2p').classList.toggle('active', count === 2);
+      resetGame();
+    };
+
+    function initParticipants() {
+      participants = [
+        { id: 'p1', name: 'Pirate 1', icon: '🏴‍☠️', pos: 1, diceCount: 2, isShark: false }
+      ];
+      if (numHumanPlayers === 2) {
+        participants.push({ id: 'p2', name: 'Pirate 2', icon: '🦜', pos: 1, diceCount: 2, isShark: false });
+      }
+      participants.push({ id: 'shark', name: 'Hungry Shark', icon: '🦈', pos: 1, diceCount: 2, isShark: true });
+    }
+
+    function buildBoard() {
+      boardMapEl.innerHTML = '';
+      for (let s = 1; s <= TOTAL_SPACES; s++) {
+        const { row, col } = getGridCoords(s);
+        const tile = document.createElement('div');
+        tile.id = `space-${s}`;
+        let extraClass = '';
+        let tagText = '';
+        let art = seaDecorPool[(s - 1) % seaDecorPool.length];
+
+        if (s === 1) {
+          extraClass = 'start-tile';
+          tagText = 'START';
+          art = '🏝️';
+        } else if (s === TOTAL_SPACES) {
+          extraClass = 'ship-tile';
+          tagText = 'SHIP!';
+          art = '⛵🏴‍☠️';
+        } else if (TREASURE_SPACES.has(s)) {
+          extraClass = 'treasure-tile';
+          tagText = '+1 DIE';
+          art = '🧰💎';
+        } else if (TRAP_SPACES.has(s)) {
+          extraClass = 'trap-tile';
+          tagText = 'TRAP!';
+          art = '🐙🌊';
+        }
+
+        tile.className = `space-tile ${extraClass}`;
+        tile.style.gridRow = row;
+        tile.style.gridColumn = col;
+
+        tile.innerHTML = `
+          <div class="tile-top">
+            <span class="space-num">${s}</span>
+            ${tagText ? `<span class="space-type-tag">${tagText}</span>` : ''}
+          </div>
+          <div class="tile-art">${art}</div>
+          <div class="tokens-rack" id="rack-${s}"></div>
+        `;
+        boardMapEl.appendChild(tile);
+      }
+    }
+
+    function renderScoreboard() {
+      scoreboardEl.innerHTML = participants.map((p, idx) => `
+        <div class="player-card ${p.isShark ? 'shark-card' : ''} ${idx === currentTurnIdx ? 'active-turn' : ''}">
+          <div class="p-info">
+            <span class="p-avatar">${p.icon}</span>
+            <div>
+              <div class="p-name">${p.name}</div>
+              <div class="p-pos">Space ${p.pos} of ${TOTAL_SPACES}</div>
+            </div>
+          </div>
+          <div class="p-dice-badge" title="Number of dice rolled each turn">
+            🎲 × ${p.diceCount}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderTokens(hopId = null) {
+      for (let s = 1; s <= TOTAL_SPACES; s++) {
+        const rack = document.getElementById(`rack-${s}`);
+        if (rack) rack.innerHTML = '';
+      }
+      participants.forEach(p => {
+        const rack = document.getElementById(`rack-${p.pos}`);
+        if (!rack) return;
+        const tok = document.createElement('div');
+        tok.className = `token ${p.id} ${hopId === p.id ? 'hop' : ''}`;
+        tok.innerHTML = `${p.icon}<span class="token-label">${p.isShark ? 'SHARK' : p.id.toUpperCase()}</span>`;
+        rack.appendChild(tok);
+      });
+      renderScoreboard();
+    }
+
+    // =========================================================================
+    // DICE RENDERING & PIP COUNTING
+    // =========================================================================
+    const pipPositions = {
+      1: [4],
+      2: [0, 8],
+      3: [0, 4, 8],
+      4: [0, 2, 6, 8],
+      5: [0, 2, 4, 6, 8],
+      6: [0, 2, 3, 5, 6, 8]
+    };
+
+    function createDieElement(value, isShark, isBonus, countable) {
+      const die = document.createElement('div');
+      die.className = `die ${isShark ? 'shark-die' : ''} ${isBonus ? 'bonus-die' : ''}`;
+      const active = pipPositions[value] || [];
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        if (active.includes(i)) {
+          const pip = document.createElement('div');
+          pip.className = 'pip' + (countable ? ' countable' : '');
+          if (countable) {
+            pip.addEventListener('click', (e) => {
+              e.stopPropagation();
+              onPipClicked(pip);
+            });
+          }
+          cell.appendChild(pip);
+        }
+        die.appendChild(cell);
+      }
+      die.addEventListener('click', () => {
+        if (gameState === 'IDLE') startTurnRoll();
+      });
+      return die;
+    }
+
+    function renderDiceEquation(values, isShark = false, countable = false, rolling = false, finalSum = '?') {
+      diceArena.innerHTML = '';
+      values.forEach((v, idx) => {
+        if (idx > 0) {
+          const plus = document.createElement('div');
+          plus.className = 'math-symbol';
+          plus.textContent = '+';
+          diceArena.appendChild(plus);
+        }
+
+        const wrap = document.createElement('div');
+        wrap.className = 'die-wrapper';
+        const dieEl = createDieElement(v, isShark, idx >= 2 && !isShark, countable);
+        if (rolling) dieEl.classList.add('rolling');
+        const lbl = document.createElement('div');
+        lbl.className = 'die-num-label';
+        lbl.textContent = rolling ? '?' : v;
+        wrap.appendChild(dieEl);
+        wrap.appendChild(lbl);
+        diceArena.appendChild(wrap);
+      });
+
+      const eq = document.createElement('div');
+      eq.className = 'math-symbol';
+      eq.textContent = '=';
+      diceArena.appendChild(eq);
+
+      const sumBox = document.createElement('div');
+      sumBox.className = 'sum-box' + (finalSum !== '?' ? ' filled' : '');
+      sumBox.id = 'sum-box';
+      sumBox.textContent = finalSum;
+      diceArena.appendChild(sumBox);
+    }
+
+    function onPipClicked(pip) {
+      if (gameState !== 'MATH') return;
+      if (pip.classList.contains('counted')) return;
+      pip.classList.add('counted');
+      countedPips++;
+      playTone(320 + countedPips * 38, 'sine', 0.12, 0.22);
+      speak(String(countedPips));
+      const total = currentRolls.reduce((a, b) => a + b, 0);
+      if (countedPips === total) {
+        helperHint.textContent = `You counted all ${total} dots! Now tap ${total} below!`;
+      } else {
+        helperHint.textContent = `Counted ${countedPips} dots... keep tapping!`;
+      }
+    }
+
+    // =========================================================================
+    // TURN FLOW (HUMAN PLAYERS & SHARK)
+    // =========================================================================
+    window.startTurnRoll = async function() {
+      if (gameState !== 'IDLE') return;
+      const actor = participants[currentTurnIdx];
+      gameState = 'ROLLING';
+      rollBtn.disabled = true;
+      countedPips = 0;
+      statusBanner.className = 'status-banner';
+
+      const diceCount = actor.diceCount;
+      statusBanner.textContent = `${actor.icon} ${actor.name} is rolling ${diceCount} dice...`;
+
+      // Shake animation
+      for (let i = 0; i < 7; i++) {
+        const temp = Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1);
+        renderDiceEquation(temp, actor.isShark, false, true, '?');
+        playTone(250 + i * 30, 'triangle', 0.05, 0.12);
+        await sleep(65);
+      }
+
+      currentRolls = Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1);
+      const sum = currentRolls.reduce((a, b) => a + b, 0);
+      const eqText = currentRolls.join(' + ');
+
+      if (actor.isShark) {
+        // Shark rolls and kids can see what the shark rolled before it moves
+        renderDiceEquation(currentRolls, true, false, false, sum);
+        statusBanner.textContent = `🦈 Hungry Shark rolled ${eqText} = ${sum}!`;
+        helperHint.textContent = `Watch out! The shark is swimming ${sum} spaces!`;
+        await sleep(950);
+        await moveActor(actor, sum);
+      } else {
+        // Human Player interactive addition!
+        gameState = 'MATH';
+        renderDiceEquation(currentRolls, false, true, false, '?');
+        statusBanner.textContent = `${actor.icon} ${actor.name}: What is ${eqText}?`;
+        helperHint.textContent = `💡 Tap each dot on the dice to count them, then pick the total!`;
+        showSumChoices(actor, sum);
+      }
+    };
+
+    function showSumChoices(actor, correctSum) {
+      rollBtn.style.display = 'none';
+      choicesRow.style.display = 'flex';
+      choicesRow.innerHTML = '';
+
+      const minPossible = actor.diceCount;
+      const maxPossible = actor.diceCount * 6;
+      const options = new Set([correctSum]);
+      const offsets = [-3, -2, -1, 1, 2, 3];
+      while (options.size < 3) {
+        const diff = offsets[Math.floor(Math.random() * offsets.length)];
+        const cand = correctSum + diff;
+        if (cand >= minPossible && cand <= maxPossible && cand !== correctSum) {
+          options.add(cand);
+        } else {
+          options.add(correctSum + options.size);
+        }
+      }
+
+      Array.from(options).sort((a, b) => a - b).forEach(num => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = num;
+        btn.addEventListener('click', () => onSumSelected(btn, actor, num, correctSum));
+        choicesRow.appendChild(btn);
+      });
+    }
+
+    async function onSumSelected(btn, actor, chosen, correctSum) {
+      if (gameState !== 'MATH') return;
+
+      if (chosen === correctSum) {
+        gameState = 'MOVING';
+        btn.classList.add('correct');
+        const sb = document.getElementById('sum-box');
+        if (sb) {
+          sb.textContent = correctSum;
+          sb.classList.add('filled');
+        }
+        document.querySelectorAll('.pip').forEach(p => p.classList.add('counted'));
+
+        playTone(587.33, 'sine', 0.12, 0.25);
+        setTimeout(() => playTone(880, 'sine', 0.2, 0.25), 100);
+
+        statusBanner.textContent = `Awesome! ${currentRolls.join(' + ')} = ${correctSum}! Sailing ${correctSum} spaces!`;
+        await sleep(700);
+        choicesRow.style.display = 'none';
+        await moveActor(actor, correctSum);
+      } else {
+        btn.classList.add('wrong');
+        playTone(190, 'sawtooth', 0.18, 0.18);
+        helperHint.textContent = `Not ${chosen}! Tap each dot on the dice to count them all together!`;
+        setTimeout(() => btn.classList.remove('wrong'), 450);
+      }
+    }
+
+    async function moveActor(actor, steps) {
+      gameState = 'MOVING';
+      for (let s = 1; s <= steps; s++) {
+        if (actor.pos < TOTAL_SPACES) {
+          actor.pos++;
+        }
+        const tile = document.getElementById(`space-${actor.pos}`);
+        if (tile) tile.classList.add('highlight-hop');
+        renderTokens(actor.id);
+        playTone(actor.isShark ? 220 + s * 18 : 380 + s * 30, actor.isShark ? 'triangle' : 'sine', 0.1, 0.22);
+        statusBanner.textContent = `${actor.icon} ${actor.name} moves... ${s} of ${steps} (Space ${actor.pos})`;
+        await sleep(310);
+        if (tile) tile.classList.remove('highlight-hop');
+
+        if (actor.pos >= TOTAL_SPACES) break;
+      }
+
+      // Check if reached Space 20 (Pirate Ship Goal!)
+      if (actor.pos >= TOTAL_SPACES) {
+        triggerEndGame(actor);
+        return;
+      }
+
+      // Check Trap or Treasure on the space landed on!
+      if (TRAP_SPACES.has(actor.pos)) {
+        await sleep(250);
+        playTrapSound();
+        statusBanner.className = 'status-banner trap-alert';
+        statusBanner.textContent = `🐙 OH NO! Space ${actor.pos} is a Giant Octopus TRAP! Back to Space 1!`;
+        helperHint.textContent = `Splash! Sent all the way back to Start Island!`;
+        speak(`Oh no! ${actor.name} landed on a trap and goes back to the beginning!`);
+        await sleep(1400);
+        actor.pos = 1;
+        renderTokens(actor.id);
+        await sleep(650);
+      } else if (TREASURE_SPACES.has(actor.pos)) {
+        await sleep(250);
+        playTreasureSound();
+        statusBanner.className = 'status-banner treasure-alert';
+        if (actor.diceCount < MAX_DICE) {
+          actor.diceCount++;
+          statusBanner.textContent = `💎 TREASURE CHEST on Space ${actor.pos}! ${actor.name} gets +1 EXTRA DIE (${actor.diceCount} dice now)!`;
+          helperHint.textContent = `Permanent power-up! ${actor.name} now rolls ${actor.diceCount} dice!`;
+          speak(`Treasure! ${actor.name} gets an extra die and now rolls ${actor.diceCount} dice!`);
+        } else {
+          statusBanner.textContent = `💎 TREASURE CHEST on Space ${actor.pos}! (${actor.name} is at max ${MAX_DICE} dice!)`;
+        }
+        renderScoreboard();
+        await sleep(1450);
+      }
+
+      // Advance to next participant's turn
+      currentTurnIdx = (currentTurnIdx + 1) % participants.length;
+      const nextActor = participants[currentTurnIdx];
+      renderScoreboard();
+
+      if (nextActor.isShark) {
+        statusBanner.className = 'status-banner';
+        statusBanner.textContent = `🦈 Uh oh! Here comes the Hungry Shark's turn!`;
+        helperHint.textContent = `The shark rolls ${nextActor.diceCount} dice!`;
+        playSharkJawsSound();
+        await sleep(950);
+        gameState = 'IDLE';
+        await startTurnRoll();
+      } else {
+        gameState = 'IDLE';
+        statusBanner.className = 'status-banner';
+        statusBanner.textContent = `${nextActor.icon} ${nextActor.name}'s Turn! Roll your ${nextActor.diceCount} dice!`;
+        helperHint.textContent = `Tap the green button (or tap a die) to roll!`;
+        rollBtn.style.display = 'inline-block';
+        rollBtn.disabled = false;
+        rollBtn.textContent = `🎲 Roll ${nextActor.diceCount} Dice!`;
+        const previewDice = Array.from({ length: nextActor.diceCount }, (_, i) => ((i + 2) % 6) + 1);
+        renderDiceEquation(previewDice, false, false, false, '?');
+      }
+    }
+
+    function triggerEndGame(winner) {
+      gameState = 'GAME_OVER';
+      const modalIcon = document.getElementById('modal-icon');
+      const modalTitle = document.getElementById('modal-title');
+      const modalDesc = document.getElementById('modal-desc');
+
+      if (winner.isShark) {
+        playTrapSound();
+        modalIcon.textContent = '🦈🌊';
+        modalTitle.textContent = 'THE SHARK REACHED THE SHIP FIRST!';
+        modalDesc.textContent = `Chomp chomp! The Hungry Shark beat you to Space ${TOTAL_SPACES}! Want a rematch?`;
+        speak('Oh no! The shark reached the pirate ship first! Play again!');
+      } else {
+        playTreasureSound();
+        startConfetti();
+        modalIcon.textContent = `${winner.icon}🏴‍☠️🏆`;
+        modalTitle.textContent = `${winner.name.toUpperCase()} WINS!`;
+        modalDesc.textContent = `Ahoy Matey! ${winner.name} reached the Pirate Ship on Space ${TOTAL_SPACES} with ${winner.diceCount} dice!`;
+        speak(`Hooray! ${winner.name} reached the pirate ship first and won the race!`);
+      }
+
+      setTimeout(() => endModal.classList.add('show'), 450);
+    }
+
+    window.resetGame = function() {
+      stopConfetti();
+      endModal.classList.remove('show');
+      initParticipants();
+      currentTurnIdx = 0;
+      gameState = 'IDLE';
+      countedPips = 0;
+
+      const first = participants[0];
+      statusBanner.className = 'status-banner';
+      statusBanner.textContent = `${first.icon} ${first.name}'s Turn! Roll your ${first.diceCount} dice to race to Space ${TOTAL_SPACES}!`;
+      helperHint.textContent = `Tap the green button (or tap a die) to roll!`;
+      choicesRow.style.display = 'none';
+      rollBtn.style.display = 'inline-block';
+      rollBtn.disabled = false;
+      rollBtn.textContent = `🎲 Roll ${first.diceCount} Dice!`;
+
+      renderDiceEquation([3, 2], false, false, false, '?');
+      renderTokens();
+    };
+
+    function sleep(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    // Spacebar / Enter shortcut to roll
+    window.addEventListener('keydown', (e) => {
+      if ((e.code === 'Space' || e.code === 'Enter') && gameState === 'IDLE') {
+        e.preventDefault();
+        startTurnRoll();
+      }
+    });
+
+    // =========================================================================
+    // CONFETTI
+    // =========================================================================
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let confettiAnim = null;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function startConfetti() {
+      const pieces = Array.from({ length: 85 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height,
+        size: 8 + Math.random() * 9,
+        vy: 2.5 + Math.random() * 4,
+        vx: -2 + Math.random() * 4,
+        color: ['#f59e0b', '#22c55e', '#38bdf8', '#ec4899', '#eab308'][Math.floor(Math.random() * 5)],
+        rot: Math.random() * 360
+      }));
+      function frame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+          p.y += p.vy;
+          p.x += p.vx;
+          p.rot += 4;
+          if (p.y > canvas.height) p.y = -20;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        });
+        confettiAnim = requestAnimationFrame(frame);
+      }
+      frame();
+    }
+
+    function stopConfetti() {
+      if (confettiAnim) cancelAnimationFrame(confettiAnim);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Initialize Map & Game
+    buildBoard();
+    resetGame();
+  </script>
+</body>
+</html>

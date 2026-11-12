@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kids Learning & Board Games Arcade! 🎲🦉🍕</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Rounded Mplus 1c', system-ui, sans-serif;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #fef3c7 0%, #e0f2fe 50%, #fce7f3 100%);
+      color: #1e293b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 20px;
+    }
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      color: #1e3a8a;
+      margin: 0 0 8px;
+      text-align: center;
+    }
+    p.subtitle {
+      font-size: 1.15rem;
+      color: #475569;
+      font-weight: bold;
+      margin: 0 0 28px;
+      text-align: center;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 1040px;
+    }
+    .card {
+      background: #ffffff;
+      border: 4px solid #cbd5e1;
+      border-radius: 28px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 32px rgba(0,0,0,0.14);
+      border-color: #3b82f6;
+    }
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 12px;
+    }
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 1.45rem;
+      color: #0f172a;
+    }
+    .card p {
+      margin: 0 0 18px;
+      font-size: 0.98rem;
+      color: #475569;
+      line-height: 1.4;
+      flex: 1;
+    }
+    .play-pill {
+      background: #2563eb;
+      color: white;
+      font-weight: 900;
+      padding: 8px 22px;
+      border-radius: 50px;
+      font-size: 1rem;
+      box-shadow: 0 4px 0 #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎲 Kids Learning & Board Games Arcade! 🎮</h1>
+  <p class="subtitle">Pick a game or study guide below to start playing!</p>
+
+  <div class="grid">
+    <a class="card" href="./catch-the-turkey/index.html">
+      <div class="icon">🦃🎲</div>
+      <h2>Catch the Turkey!</h2>
+      <p>Roll 2 dice, tap the dots to count and add them together, and hop around the farmyard loop track to catch the runaway turkey!</p>
+      <span class="play-pill">Play Now ➡️</span>
+    </a>
+
+    <a class="card" href="./shark-pirate-race/index.html">
+      <div class="icon">🦈🏴‍☠️</div>
+      <h2>Race to the Pirate Ship!</h2>
+      <p>1–2 Pirates vs. the Hungry Shark across 50 ocean spaces! Dodge Giant Octopus traps and collect Treasure Chests to earn extra dice!</p>
+      <span class="play-pill">Play Now ➡️</span>
+    </a>
+
+    <a class="card" href="./pizza-chef-game/index.html">
+      <div class="icon">🍕👩‍🍳</div>
+      <h2>Pizza Chef Party!</h2>
+      <p>2 Chefs roll 2 dice over 8 turns to collect Sauce, Cheese, and Toppings (plus free toppings on doubles!) to bake the highest-scoring pizza!</p>
+      <span class="play-pill">Play Now ➡️</span>
+    </a>
+
+    <a class="card" href="./fundations-unit-4/index.html">
+      <div class="icon">🦉✏️</div>
+      <h2>Fundations Unit 4 Adventure!</h2>
+      <p>2nd Grade interactive review for Baseword & Suffixes (-s, -es, -ing, -ed, -er, -est), the 3 sounds of -ed (/id/, /d/, /t/), Trick Words, and Sentences!</p>
+      <span class="play-pill">Study & Play ➡️</span>
+    </a>
+  </div>
+</body>
+</html>

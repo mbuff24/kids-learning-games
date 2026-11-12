@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Catch the Turkey! 🦃🎲</title>
+  <style>
+    :root {
+      --bg-top: #fef3c7;
+      --bg-bottom: #fde68a;
+      --board-bg: #86efac;
+      --board-border: #22c55e;
+      --tile-1: #fffbeb;
+      --tile-2: #fef08a;
+      --tile-3: #fed7aa;
+      --tile-4: #fecdd3;
+      --text-dark: #451a03;
+      --accent-orange: #ea580c;
+      --accent-green: #16a34a;
+      --accent-blue: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', 'Rounded Mplus 1c', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    header {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.85);
+      border-bottom: 4px solid #f59e0b;
+      border-radius: 0 0 24px 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .title-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      color: #b45309;
+      text-shadow: 2px 2px 0px #fef08a;
+    }
+
+    .controls-top {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      background: #fff;
+      border: 3px solid #f59e0b;
+      border-radius: 50px;
+      padding: 6px 14px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--text-dark);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 0 #d97706;
+      transition: transform 0.1s;
+    }
+
+    .icon-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #d97706;
+    }
+
+    /* Character Selector Pills */
+    .char-picker {
+      display: flex;
+      gap: 4px;
+      background: #fef3c7;
+      padding: 4px;
+      border-radius: 30px;
+      border: 2px solid #f59e0b;
+    }
+
+    .char-btn {
+      font-size: 1.3rem;
+      border: none;
+      background: transparent;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+    }
+
+    .char-btn.active {
+      background: #f59e0b;
+      transform: scale(1.15);
+    }
+
+    /* Main Game Container */
+    main {
+      width: 100%;
+      max-width: 960px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    /* Board Grid (6 columns x 4 rows perimeter = 16 spaces) */
+    .board-container {
+      position: relative;
+      width: 100%;
+      max-width: 820px;
+      background: var(--board-bg);
+      border: 8px solid var(--board-border);
+      border-radius: 32px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: auto auto auto auto;
+      gap: 10px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.15), inset 0 0 20px rgba(34, 197, 94, 0.3);
+    }
+
+    .tile {
+      position: relative;
+      border-radius: 20px;
+      border: 4px solid rgba(255,255,255,0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 6px 8px;
+      min-height: 92px;
+      box-shadow: 0 5px 0 rgba(0,0,0,0.12);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .tile-0 { background: var(--tile-1); }
+    .tile-1 { background: var(--tile-2); }
+    .tile-2 { background: var(--tile-3); }
+    .tile-3 { background: var(--tile-4); }
+
+    .tile.highlight-step {
+      transform: scale(1.06);
+      border-color: #f59e0b;
+      box-shadow: 0 0 18px #f59e0b;
+      z-index: 4;
+    }
+
+    .tile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .tile-number {
+      font-size: clamp(0.85rem, 2vw, 1.25rem);
+      font-weight: 900;
+      color: rgba(69, 26, 3, 0.65);
+      background: rgba(255,255,255,0.7);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tile-decor {
+      font-size: clamp(0.9rem, 1.8vw, 1.3rem);
+      opacity: 0.8;
+    }
+
+    .tokens-slot {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      min-height: 48px;
+      z-index: 5;
+    }
+
+    /* Tokens */
+    .token {
+      font-size: clamp(1.8rem, 4.5vw, 2.9rem);
+      line-height: 1;
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,0.25));
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+
+    .token.bounce {
+      animation: hop 0.35s ease-in-out;
+    }
+
+    .token-badge {
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 1px 6px;
+      border-radius: 10px;
+      color: white;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .token.player .token-badge {
+      background: var(--accent-blue);
+    }
+
+    .token.turkey .token-badge {
+      background: var(--accent-orange);
+    }
+
+    @keyframes hop {
+      0% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-22px) scale(1.25); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    /* Center Yard (inside the 6x4 loop: cols 2..5, rows 2..3) */
+    .center-stage {
+      grid-column: 2 / 6;
+      grid-row: 2 / 4;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 26px;
+      border: 5px dashed #f59e0b;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      box-shadow: inset 0 4px 12px rgba(0,0,0,0.05);
+      position: relative;
+    }
+
+    .status-banner {
+      font-size: clamp(1.05rem, 2.5vw, 1.5rem);
+      font-weight: 900;
+      color: var(--text-dark);
+      background: #fef3c7;
+      padding: 6px 18px;
+      border-radius: 30px;
+      border: 3px solid #f59e0b;
+      width: 100%;
+      max-width: 460px;
+    }
+
+    /* Dice & Math Interactive Area */
+    .dice-arena {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 4px 0;
+      flex-wrap: wrap;
+    }
+
+    .die-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .die {
+      width: clamp(64px, 11vw, 88px);
+      height: clamp(64px, 11vw, 88px);
+      background: #ffffff;
+      border-radius: 20px;
+      border: 4px solid #d97706;
+      box-shadow: 0 6px 0 #b45309, 0 8px 15px rgba(0,0,0,0.15);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 8px;
+      gap: 4px;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .die.turkey-die {
+      background: #fff7ed;
+      border-color: #ea580c;
+      box-shadow: 0 6px 0 #9a3412, 0 8px 15px rgba(0,0,0,0.15);
+    }
+
+    .die.rolling {
+      animation: shakeDie 0.4s infinite;
+    }
+
+    @keyframes shakeDie {
+      0% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-12deg) scale(1.08); }
+      50% { transform: rotate(10deg) scale(0.95); }
+      75% { transform: rotate(-8deg) scale(1.05); }
+      100% { transform: rotate(0deg) scale(1); }
+    }
+
+    .pip {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #1e293b;
+      transform: scale(0.85);
+      transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+
+    .turkey-die .pip {
+      background: #ea580c;
+    }
+
+    .pip.countable {
+      cursor: pointer;
+      animation: pulsePip 1.2s infinite alternate;
+    }
+
+    .pip.counted {
+      background: #16a34a !important;
+      transform: scale(1.18);
+      box-shadow: 0 0 8px #22c55e;
+      animation: none;
+    }
+
+    @keyframes pulsePip {
+      0% { transform: scale(0.8); }
+      100% { transform: scale(1.02); }
+    }
+
+    .die-num-label {
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: #b45309;
+    }
+
+    .math-symbol {
+      font-size: clamp(1.5rem, 3.5vw, 2.4rem);
+      font-weight: 900;
+      color: #d97706;
+    }
+
+    .sum-box {
+      min-width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      border: 4px dashed #f59e0b;
+      background: #fffbeb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.9rem;
+      font-weight: 900;
+      color: #16a34a;
+      padding: 0 12px;
+    }
+
+    .sum-box.filled {
+      border-style: solid;
+      border-color: #16a34a;
+      background: #dcfce7;
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.7); }
+      100% { transform: scale(1); }
+    }
+
+    /* Action Controls in Center */
+    .action-area {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .big-btn {
+      background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+      border: 4px solid #fff;
+      border-radius: 50px;
+      padding: 10px 30px;
+      font-size: clamp(1.2rem, 3vw, 1.7rem);
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #15803d, 0 8px 16px rgba(0,0,0,0.2);
+      transition: transform 0.1s, box-shadow 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .big-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    .big-btn:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #15803d;
+    }
+
+    .big-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* Number Choice Buttons for Addition */
+    .choices-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .choice-btn {
+      width: clamp(54px, 9vw, 72px);
+      height: clamp(50px, 8vw, 64px);
+      border-radius: 18px;
+      border: 4px solid #3b82f6;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #1d4ed8;
+      transition: transform 0.15s, background 0.15s;
+    }
+
+    .choice-btn:hover {
+      background: #dbeafe;
+      transform: translateY(-2px);
+    }
+
+    .choice-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #1d4ed8;
+    }
+
+    .choice-btn.wrong {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #b91c1c;
+      box-shadow: 0 5px 0 #b91c1c;
+      animation: wiggle 0.35s;
+    }
+
+    .choice-btn.correct {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #15803d;
+      box-shadow: 0 5px 0 #15803d;
+    }
+
+    @keyframes wiggle {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    .helper-hint {
+      font-size: clamp(0.85rem, 1.8vw, 1.05rem);
+      font-weight: bold;
+      color: #92400e;
+      margin: 0;
+    }
+
+    /* Distance Meter Footer */
+    .distance-bar {
+      background: rgba(255, 255, 255, 0.9);
+      border: 3px solid #f59e0b;
+      border-radius: 30px;
+      padding: 8px 22px;
+      font-size: clamp(1rem, 2.2vw, 1.25rem);
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    }
+
+    .badge-pill {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      padding: 4px 12px;
+      border-radius: 20px;
+      color: #b45309;
+    }
+
+    /* Celebration Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #fffbeb;
+      border: 8px solid #f59e0b;
+      border-radius: 36px;
+      padding: 30px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      transform: scale(0.8);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-overlay.show .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-emojis {
+      font-size: 4.5rem;
+      margin-bottom: 10px;
+      animation: hop 0.8s infinite;
+    }
+
+    .modal-title {
+      font-size: 2.3rem;
+      color: #b45309;
+      margin: 0 0 10px;
+    }
+
+    .modal-text {
+      font-size: 1.3rem;
+      margin: 0 0 24px;
+      color: #78350f;
+      font-weight: bold;
+    }
+
+    /* Confetti Canvas */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    /* Responsive adjustments for smaller mobile screens */
+    @media (max-width: 680px) {
+      .board-container {
+        aspect-ratio: auto;
+        min-height: 490px;
+        gap: 6px;
+        padding: 8px;
+      }
+      .tile {
+        padding: 4px;
+        border-radius: 14px;
+      }
+      .tile-decor {
+        display: none;
+      }
+      .center-stage {
+        padding: 8px;
+      }
+      .die {
+        width: 56px;
+        height: 56px;
+        padding: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <header>
+    <div class="title-area">
+      <h1>🦃 Catch the Turkey!</h1>
+    </div>
+    <div class="controls-top">
+      <div class="char-picker" title="Choose your character">
+        <button class="char-btn active" data-char="🧑‍🌾" aria-label="Farmer">🧑‍🌾</button>
+        <button class="char-btn" data-char="🦊" aria-label="Fox">🦊</button>
+        <button class="char-btn" data-char="🐶" aria-label="Puppy">🐶</button>
+        <button class="char-btn" data-char="👧" aria-label="Girl">👧</button>
+        <button class="char-btn" data-char="👦" aria-label="Boy">👦</button>
+      </div>
+      <button class="icon-btn" id="voice-btn" title="Toggle Voice Helper">
+        🔊 <span id="voice-label">Voice On</span>
+      </button>
+      <button class="icon-btn" id="restart-btn" title="Start New Game">
+        🔄 New Game
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="board-container" id="board">
+      <!-- Center stage inside the loop -->
+      <div class="center-stage">
+        <div class="status-banner" id="status-banner">
+          Roll the 2 dice to chase the turkey!
+        </div>
+
+        <div class="dice-arena" id="dice-arena">
+          <div class="die-wrapper" id="die1-wrap">
+            <div class="die" id="die1" title="Tap dots to count!"></div>
+            <div class="die-num-label" id="die1-label">?</div>
+          </div>
+
+          <div class="math-symbol" id="plus-symbol">+</div>
+
+          <div class="die-wrapper" id="die2-wrap">
+            <div class="die" id="die2" title="Tap dots to count!"></div>
+            <div class="die-num-label" id="die2-label">?</div>
+          </div>
+
+          <div class="math-symbol" id="equals-symbol">=</div>
+
+          <div class="sum-box" id="sum-box">?</div>
+        </div>
+
+        <div class="action-area" id="action-area">
+          <p class="helper-hint" id="helper-hint">Tap the green button to roll!</p>
+          <button class="big-btn" id="roll-btn">🎲 Roll 2 Dice!</button>
+          <div class="choices-row" id="choices-row" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="distance-bar">
+      <span>🎯 <strong id="distance-text">Turkey is 8 spaces ahead!</strong></span>
+      <span class="badge-pill" id="turn-counter">Rolls: 0</span>
+    </div>
+  </main>
+
+  <!-- Win Modal -->
+  <div class="modal-overlay" id="win-modal">
+    <div class="modal-card">
+      <div class="modal-emojis" id="win-emojis">🧑‍🌾🦃🎉</div>
+      <h2 class="modal-title">YOU CAUGHT THE TURKEY!</h2>
+      <p class="modal-text" id="win-message">Gobble gobble! Great job adding the dice!</p>
+      <button class="big-btn" id="play-again-btn" style="margin: 0 auto;">🎲 Play Again!</button>
+    </div>
+  </div>
+
+  <script>
+    // --- Board Layout Configuration (16 spaces around a 6x4 grid perimeter) ---
+    const TOTAL_SPACES = 16;
+    const perimeterCoords = [
+      // Top row (left to right): spaces 0..5
+      { col: 1, row: 1 }, { col: 2, row: 1 }, { col: 3, row: 1 },
+      { col: 4, row: 1 }, { col: 5, row: 1 }, { col: 6, row: 1 },
+      // Right column (top to bottom): spaces 6..7
+      { col: 6, row: 2 }, { col: 6, row: 3 },
+      // Bottom row (right to left): spaces 8..13
+      { col: 6, row: 4 }, { col: 5, row: 4 }, { col: 4, row: 4 },
+      { col: 3, row: 4 }, { col: 2, row: 4 }, { col: 1, row: 4 },
+      // Left column (bottom to top): spaces 14..15
+      { col: 1, row: 3 }, { col: 1, row: 2 }
+    ];
+
+    const farmDecors = ['🌽', '🎃', '🍁', '🌻', '🍎', '🌾', '🍄', '🌰', '🚜', '🏡', '🥧', '🥕', '🍂', '🌻', '🌽', '🎃'];
+
+    // --- State ---
+    let playerPos = 0;
+    let turkeyPos = 8; // Starts halfway around the track
+    let playerChar = '🧑‍🌾';
+    let rollCount = 0;
+    let soundEnabled = true;
+    let gameState = 'IDLE'; // IDLE, ROLLING, MATH, MOVING, TURKEY_TURN, GAME_OVER
+    let currentDie1 = 1;
+    let currentDie2 = 1;
+    let countedPips = 0;
+
+    // --- DOM Elements ---
+    const boardEl = document.getElementById('board');
+    const statusBanner = document.getElementById('status-banner');
+    const die1El = document.getElementById('die1');
+    const die2El = document.getElementById('die2');
+    const die2Wrap = document.getElementById('die2-wrap');
+    const die1Label = document.getElementById('die1-label');
+    const die2Label = document.getElementById('die2-label');
+    const plusSymbol = document.getElementById('plus-symbol');
+    const equalsSymbol = document.getElementById('equals-symbol');
+    const sumBox = document.getElementById('sum-box');
+    const rollBtn = document.getElementById('roll-btn');
+    const choicesRow = document.getElementById('choices-row');
+    const helperHint = document.getElementById('helper-hint');
+    const distanceText = document.getElementById('distance-text');
+    const turnCounter = document.getElementById('turn-counter');
+    const winModal = document.getElementById('win-modal');
+    const winEmojis = document.getElementById('win-emojis');
+    const winMessage = document.getElementById('win-message');
+    const voiceBtn = document.getElementById('voice-btn');
+    const voiceLabel = document.getElementById('voice-label');
+
+    // --- Web Audio Synthesizer (Cheerful kid-friendly sounds, no external files needed) ---
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.12, volume = 0.2) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(volume, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playGobbleSound() {
+      if (!soundEnabled) return;
+      const notes = [520, 440, 540, 420, 500, 390];
+      notes.forEach((n, idx) => {
+        setTimeout(() => playTone(n, 'triangle', 0.07, 0.22), idx * 55);
+      });
+    }
+
+    function playWinFanfare() {
+      if (!soundEnabled) return;
+      const melody = [
+        { f: 523.25, d: 0.15, t: 0 },
+        { f: 659.25, d: 0.15, t: 150 },
+        { f: 783.99, d: 0.15, t: 300 },
+        { f: 1046.5, d: 0.4,  t: 450 }
+      ];
+      melody.forEach(m => {
+        setTimeout(() => playTone(m.f, 'triangle', m.d, 0.28), m.t);
+      });
+    }
+
+    function speak(text) {
+      if (!soundEnabled || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = 0.95;
+        utter.pitch = 1.15;
+        window.speechSynthesis.speak(utter);
+      } catch (e) {}
+    }
+
+    // --- Pip Layout on a 3x3 Grid for Values 1..6 ---
+    const pipPositions = {
+      1: [4],
+      2: [0, 8],
+      3: [0, 4, 8],
+      4: [0, 2, 6, 8],
+      5: [0, 2, 4, 6, 8],
+      6: [0, 2, 3, 5, 6, 8]
+    };
+
+    function renderDie(dieEl, value, countable = false) {
+      dieEl.innerHTML = '';
+      const activeIndices = pipPositions[value] || [];
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        if (activeIndices.includes(i)) {
+          const pip = document.createElement('div');
+          pip.className = 'pip' + (countable ? ' countable' : '');
+          if (countable) {
+            pip.addEventListener('click', (e) => {
+              e.stopPropagation();
+              onPipTapped(pip);
+            });
+          }
+          cell.appendChild(pip);
+        }
+        dieEl.appendChild(cell);
+      }
+    }
+
+    function onPipTapped(pip) {
+      if (gameState !== 'MATH') return;
+      if (pip.classList.contains('counted')) return;
+
+      pip.classList.add('counted');
+      countedPips++;
+      // Rising pitch as the child counts up!
+      playTone(330 + countedPips * 45, 'sine', 0.14, 0.25);
+      speak(String(countedPips));
+
+      const total = currentDie1 + currentDie2;
+      if (countedPips === total) {
+        helperHint.textContent = `You counted all ${total} dots! Now tap ${total}!`;
+      } else {
+        helperHint.textContent = `Counted ${countedPips}... keep tapping the dots!`;
+      }
+    }
+
+    // --- Build Board Tiles ---
+    const tileElements = [];
+    function createBoard() {
+      // Remove existing tiles if any
+      tileElements.forEach(t => t.remove());
+      tileElements.length = 0;
+
+      perimeterCoords.forEach((coord, idx) => {
+        const tile = document.createElement('div');
+        tile.className = `tile tile-${idx % 4}`;
+        tile.style.gridColumn = coord.col;
+        tile.style.gridRow = coord.row;
+
+        tile.innerHTML = `
+          <div class="tile-header">
+            <span class="tile-number">${idx + 1}</span>
+            <span class="tile-decor">${farmDecors[idx]}</span>
+          </div>
+          <div class="tokens-slot" id="slot-${idx}"></div>
+        `;
+        boardEl.appendChild(tile);
+        tileElements.push(tile);
+      });
+    }
+
+    function renderTokens(bounceTarget = null) {
+      for (let i = 0; i < TOTAL_SPACES; i++) {
+        const slot = document.getElementById(`slot-${i}`);
+        slot.innerHTML = '';
+      }
+
+      // Create Player Token
+      const pSlot = document.getElementById(`slot-${playerPos}`);
+      const pToken = document.createElement('div');
+      pToken.className = 'token player' + (bounceTarget === 'player' ? ' bounce' : '');
+      pToken.innerHTML = `${playerChar}<span class="token-badge">YOU</span>`;
+      pSlot.appendChild(pToken);
+
+      // Create Turkey Token
+      const tSlot = document.getElementById(`slot-${turkeyPos}`);
+      const tToken = document.createElement('div');
+      tToken.className = 'token turkey' + (bounceTarget === 'turkey' ? ' bounce' : '');
+      tToken.innerHTML = `🦃<span class="token-badge">TURKEY</span>`;
+      tSlot.appendChild(tToken);
+
+      updateDistanceMeter();
+    }
+
+    function getSpacesAhead() {
+      return (turkeyPos - playerPos + TOTAL_SPACES) % TOTAL_SPACES;
+    }
+
+    function updateDistanceMeter() {
+      const dist = getSpacesAhead();
+      if (dist === 0) {
+        distanceText.textContent = `🎉 You caught the turkey!`;
+      } else if (dist === 1) {
+        distanceText.textContent = `Turkey is only 1 space ahead!`;
+      } else {
+        distanceText.textContent = `Turkey is ${dist} spaces ahead!`;
+      }
+      turnCounter.textContent = `Rolls: ${rollCount}`;
+    }
+
+    // --- Rolling & Interactive Addition Flow ---
+    function showTwoDiceLayout(isTurkey = false) {
+      die1El.classList.toggle('turkey-die', isTurkey);
+      if (isTurkey) {
+        die2Wrap.style.display = 'none';
+        plusSymbol.style.display = 'none';
+        equalsSymbol.style.display = 'none';
+        sumBox.style.display = 'none';
+      } else {
+        die2Wrap.style.display = 'flex';
+        plusSymbol.style.display = 'block';
+        equalsSymbol.style.display = 'block';
+        sumBox.style.display = 'flex';
+      }
+    }
+
+    async function handlePlayerRoll() {
+      if (gameState !== 'IDLE') return;
+      gameState = 'ROLLING';
+      rollBtn.disabled = true;
+      rollCount++;
+      countedPips = 0;
+
+      showTwoDiceLayout(false);
+      sumBox.textContent = '?';
+      sumBox.classList.remove('filled');
+      die1El.classList.add('rolling');
+      die2El.classList.add('rolling');
+      statusBanner.textContent = 'Rolling the dice... 🎲';
+      helperHint.textContent = 'Shake, shake, shake!';
+
+      // Animate random faces briefly
+      for (let i = 0; i < 7; i++) {
+        renderDie(die1El, Math.floor(Math.random() * 6) + 1, false);
+        renderDie(die2El, Math.floor(Math.random() * 6) + 1, false);
+        playTone(240 + i * 30, 'triangle', 0.05, 0.12);
+        await sleep(65);
+      }
+
+      die1El.classList.remove('rolling');
+      die2El.classList.remove('rolling');
+
+      currentDie1 = Math.floor(Math.random() * 6) + 1;
+      currentDie2 = Math.floor(Math.random() * 6) + 1;
+
+      renderDie(die1El, currentDie1, true);
+      renderDie(die2El, currentDie2, true);
+      die1Label.textContent = currentDie1;
+      die2Label.textContent = currentDie2;
+
+      gameState = 'MATH';
+      const sum = currentDie1 + currentDie2;
+      statusBanner.textContent = `What is ${currentDie1} + ${currentDie2}?`;
+      helperHint.textContent = `💡 Tip: Tap each dot on the dice to count them out loud!`;
+      speak(`You rolled ${currentDie1} and ${currentDie2}. What is ${currentDie1} plus ${currentDie2}?`);
+
+      showAdditionChoices(sum);
+    }
+
+    function showAdditionChoices(correctSum) {
+      rollBtn.style.display = 'none';
+      choicesRow.style.display = 'flex';
+      choicesRow.innerHTML = '';
+
+      // Generate 2 friendly wrong answers between 2 and 12
+      const options = new Set([correctSum]);
+      const candidates = [correctSum - 2, correctSum - 1, correctSum + 1, correctSum + 2, correctSum + 3]
+        .filter(n => n >= 2 && n <= 12 && n !== correctSum);
+
+      while (options.size < 3 && candidates.length > 0) {
+        const pickIdx = Math.floor(Math.random() * candidates.length);
+        options.add(candidates.splice(pickIdx, 1)[0]);
+      }
+
+      const sortedOptions = Array.from(options).sort((a, b) => a - b);
+
+      sortedOptions.forEach(num => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = num;
+        btn.addEventListener('click', () => onChoiceSelected(btn, num, correctSum));
+        choicesRow.appendChild(btn);
+      });
+    }
+
+    async function onChoiceSelected(btn, chosen, correctSum) {
+      if (gameState !== 'MATH') return;
+
+      if (chosen === correctSum) {
+        gameState = 'MOVING';
+        btn.classList.add('correct');
+        sumBox.textContent = correctSum;
+        sumBox.classList.add('filled');
+
+        // Mark all pips green to celebrate!
+        document.querySelectorAll('.pip').forEach(p => p.classList.add('counted'));
+
+        playTone(587.33, 'sine', 0.12, 0.25);
+        setTimeout(() => playTone(880, 'sine', 0.22, 0.25), 110);
+
+        statusBanner.textContent = `Awesome! ${currentDie1} + ${currentDie2} = ${correctSum}!`;
+        helperHint.textContent = `Moving ${correctSum} spaces...`;
+        speak(`Yes! ${currentDie1} plus ${currentDie2} is ${correctSum}! Let's move ${correctSum} spaces!`);
+
+        await sleep(750);
+        choicesRow.style.display = 'none';
+        await moveTokenStepByStep('player', correctSum);
+      } else {
+        btn.classList.add('wrong');
+        playTone(190, 'sawtooth', 0.18, 0.18);
+        helperHint.textContent = `Not quite ${chosen}! Try tapping each dot on the dice to count them all!`;
+        speak(`Almost! Tap the dots on the dice to count them together.`);
+        setTimeout(() => btn.classList.remove('wrong'), 500);
+      }
+    }
+
+    async function moveTokenStepByStep(who, steps) {
+      for (let step = 1; step <= steps; step++) {
+        if (who === 'player') {
+          playerPos = (playerPos + 1) % TOTAL_SPACES;
+          tileElements[playerPos].classList.add('highlight-step');
+          renderTokens('player');
+          playTone(380 + step * 32, 'sine', 0.11, 0.22);
+          statusBanner.textContent = `Moving... ${step} of ${steps}!`;
+          await sleep(340);
+          tileElements[playerPos].classList.remove('highlight-step');
+        } else {
+          turkeyPos = (turkeyPos + 1) % TOTAL_SPACES;
+          tileElements[turkeyPos].classList.add('highlight-step');
+          renderTokens('turkey');
+          playTone(520 - (step % 2) * 90, 'triangle', 0.11, 0.2);
+          statusBanner.textContent = `Turkey runs... ${step} of ${steps}! 🦃`;
+          await sleep(340);
+          tileElements[turkeyPos].classList.remove('highlight-step');
+        }
+      }
+
+      // Check if player and turkey are now on the exact same space!
+      if (playerPos === turkeyPos) {
+        triggerVictory();
+        return;
+      }
+
+      if (who === 'player') {
+        await sleep(350);
+        await runTurkeyTurn();
+      } else {
+        // Back to Player's turn
+        gameState = 'IDLE';
+        showTwoDiceLayout(false);
+        renderDie(die1El, currentDie1, false);
+        renderDie(die2El, currentDie2, false);
+        rollBtn.style.display = 'flex';
+        rollBtn.disabled = false;
+        const dist = getSpacesAhead();
+        statusBanner.textContent = `Your turn! Roll the 2 dice!`;
+        helperHint.textContent = dist <= 6
+          ? `Ooooh! The turkey is only ${dist} spaces away!`
+          : `Tap the green button to roll!`;
+        speak(`Your turn! Roll the dice!`);
+      }
+    }
+
+    async function runTurkeyTurn() {
+      gameState = 'TURKEY_TURN';
+      statusBanner.textContent = `Uh oh! Now it's the Turkey's turn! 🦃`;
+      helperHint.textContent = `Gobble gobble! Watch the turkey roll 1 die!`;
+      playGobbleSound();
+      showTwoDiceLayout(true);
+
+      await sleep(750);
+
+      die1El.classList.add('rolling');
+      for (let i = 0; i < 6; i++) {
+        renderDie(die1El, Math.floor(Math.random() * 6) + 1, false);
+        playTone(300 + i * 25, 'triangle', 0.05, 0.12);
+        await sleep(65);
+      }
+      die1El.classList.remove('rolling');
+
+      const turkeyRoll = Math.floor(Math.random() * 6) + 1;
+      renderDie(die1El, turkeyRoll, false);
+      die1Label.textContent = `🦃 rolled ${turkeyRoll}`;
+
+      statusBanner.textContent = `The Turkey rolled a ${turkeyRoll}! 🦃`;
+      speak(`Gobble gobble! The turkey rolled a ${turkeyRoll}!`);
+      await sleep(750);
+
+      await moveTokenStepByStep('turkey', turkeyRoll);
+    }
+
+    function triggerVictory() {
+      gameState = 'GAME_OVER';
+      playWinFanfare();
+      statusBanner.textContent = `🎉 YOU CAUGHT THE TURKEY! 🎉`;
+      helperHint.textContent = `Amazing job!`;
+      winEmojis.textContent = `${playerChar}🦃🏆`;
+      winMessage.textContent = `Gobble gobble! You caught the turkey in ${rollCount} ${rollCount === 1 ? 'roll' : 'rolls'}!`;
+      speak(`Hooray! You landed on the same space and caught the turkey! Great job adding the dice!`);
+      startConfetti();
+      setTimeout(() => {
+        winModal.classList.add('show');
+      }, 450);
+    }
+
+    function resetGame() {
+      stopConfetti();
+      winModal.classList.remove('show');
+      playerPos = 0;
+      turkeyPos = 8;
+      rollCount = 0;
+      countedPips = 0;
+      gameState = 'IDLE';
+
+      showTwoDiceLayout(false);
+      renderDie(die1El, 3, false);
+      renderDie(die2El, 2, false);
+      die1Label.textContent = '3';
+      die2Label.textContent = '2';
+      sumBox.textContent = '?';
+      sumBox.classList.remove('filled');
+
+      choicesRow.style.display = 'none';
+      rollBtn.style.display = 'flex';
+      rollBtn.disabled = false;
+
+      statusBanner.textContent = 'Roll the 2 dice to chase the turkey!';
+      helperHint.textContent = 'Tap the green button or tap the dice to roll!';
+      renderTokens();
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // --- Simple Confetti Effect ---
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let confettiPieces = [];
+    let confettiAnimId = null;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function startConfetti() {
+      confettiPieces = Array.from({ length: 90 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height,
+        size: 8 + Math.random() * 10,
+        speedY: 2.5 + Math.random() * 4,
+        speedX: -2 + Math.random() * 4,
+        color: ['#f59e0b', '#22c55e', '#3b82f6', '#ec4899', '#ef4444', '#a855f7'][Math.floor(Math.random() * 6)],
+        rot: Math.random() * 360
+      }));
+
+      function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        confettiPieces.forEach(p => {
+          p.y += p.speedY;
+          p.x += p.speedX;
+          p.rot += 4;
+          if (p.y > canvas.height) p.y = -20;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        });
+        confettiAnimId = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    function stopConfetti() {
+      if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // --- Event Listeners ---
+    rollBtn.addEventListener('click', handlePlayerRoll);
+    die1El.addEventListener('click', () => { if (gameState === 'IDLE') handlePlayerRoll(); });
+    die2El.addEventListener('click', () => { if (gameState === 'IDLE') handlePlayerRoll(); });
+    window.addEventListener('keydown', (e) => {
+      if ((e.code === 'Space' || e.code === 'Enter') && gameState === 'IDLE') {
+        e.preventDefault();
+        handlePlayerRoll();
+      }
+    });
+    document.getElementById('restart-btn').addEventListener('click', resetGame);
+    document.getElementById('play-again-btn').addEventListener('click', resetGame);
+
+    voiceBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      voiceBtn.innerHTML = soundEnabled
+        ? '🔊 <span id="voice-label">Voice On</span>'
+        : '🔇 <span id="voice-label">Muted</span>';
+      if (!soundEnabled && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    });
+
+    document.querySelectorAll('.char-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        playerChar = btn.dataset.char;
+        renderTokens('player');
+        playTone(520, 'sine', 0.1, 0.2);
+      });
+    });
+
+    // Initialize Board
+    createBoard();
+    resetGame();
+  </script>
+</body>
+</html>
