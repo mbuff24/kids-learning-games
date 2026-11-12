@@ -51,12 +51,12 @@
 
     /* Header */
     header {
-      width: 100%;
-      max-width: 1260px;
+      width: 96%;
+      max-width: 2200px;
       background: #ffffff;
       border-bottom: 4px solid var(--red-check);
       border-radius: 0 0 20px 20px;
-      padding: 6px 18px;
+      padding: clamp(6px, 1vh, 14px) clamp(18px, 2vw, 32px);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -74,7 +74,7 @@
 
     .title-wrap h1 {
       margin: 0;
-      font-size: 1.35rem;
+      font-size: clamp(1.35rem, 2vw, 2.2rem);
       color: #b91c1c;
       text-shadow: 1px 1px 0 #fecaca;
     }
@@ -102,17 +102,17 @@
       box-shadow: 0 1px 0 #d97706;
     }
 
-    /* Main Grid: Optimized for 13" MacBook Pro Widescreen */
+    /* Main Grid: Scales smoothly from 13" MacBook Pro up to 27" Monitors */
     main {
-      width: 100%;
-      max-width: 1260px;
+      width: 96%;
+      max-width: 2200px;
       flex: 1;
       min-height: 0;
-      padding: 8px 14px;
+      padding: clamp(8px, 1.4vh, 20px) clamp(14px, 1.8vw, 28px);
       display: grid;
-      grid-template-columns: 350px 1fr;
+      grid-template-columns: clamp(350px, 26vw, 460px) 1fr;
       grid-template-rows: 1fr auto;
-      gap: 8px 14px;
+      gap: clamp(8px, 1.2vh, 18px) clamp(14px, 1.5vw, 24px);
       align-items: stretch;
     }
 

@@ -49,12 +49,12 @@
 
     /* Header */
     header {
-      width: 100%;
-      max-width: 1240px;
+      width: 96%;
+      max-width: 2200px;
       background: rgba(255, 255, 255, 0.94);
       border-bottom: 4px solid #f59e0b;
       border-radius: 0 0 20px 20px;
-      padding: 6px 18px;
+      padding: clamp(6px, 1vh, 14px) clamp(18px, 2vw, 32px);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -72,7 +72,7 @@
 
     .title-wrap h1 {
       margin: 0;
-      font-size: 1.35rem;
+      font-size: clamp(1.35rem, 2vw, 2.2rem);
       color: #0c4a6e;
       text-shadow: 1px 1px 0 #bae6fd;
     }
@@ -127,17 +127,17 @@
       box-shadow: 0 1px 0 #d97706;
     }
 
-    /* Main Layout: Side-by-Side Optimized for 13" MacBook Pro (1280x800 / 1440x900) */
+    /* Main Layout: Side-by-Side Optimized for 13" MacBook Pro up to 27" Monitors */
     main {
-      width: 100%;
-      max-width: 1240px;
+      width: 96%;
+      max-width: 2200px;
       flex: 1;
       min-height: 0;
-      padding: 10px 16px;
+      padding: clamp(10px, 1.4vh, 20px) clamp(16px, 1.8vw, 28px);
       display: grid;
-      grid-template-columns: 330px 1fr;
+      grid-template-columns: clamp(330px, 25vw, 440px) 1fr;
       grid-template-rows: 1fr auto;
-      gap: 10px 14px;
+      gap: clamp(10px, 1.2vh, 18px) clamp(14px, 1.5vw, 24px);
       align-items: stretch;
     }
 
@@ -535,16 +535,16 @@
       background: rgba(255, 255, 255, 0.85);
       border: 1.5px solid rgba(0,0,0,0.15);
       border-radius: 8px;
-      padding: 0px 5px;
+      padding: 1px 6px;
       font-weight: 900;
-      font-size: 0.72rem;
+      font-size: clamp(0.72rem, 1vw, 1.05rem);
       color: #0f172a;
     }
 
     .space-type-tag {
-      font-size: 0.58rem;
+      font-size: clamp(0.58rem, 0.8vw, 0.85rem);
       font-weight: 900;
-      padding: 1px 4px;
+      padding: 1px 5px;
       border-radius: 6px;
       text-transform: uppercase;
     }
@@ -571,9 +571,9 @@
 
     .tile-art {
       text-align: center;
-      font-size: 1.1rem;
+      font-size: clamp(1.2rem, 2.2vw, 2.2rem);
       line-height: 1;
-      opacity: 0.88;
+      opacity: 0.92;
       margin: 0;
     }
 
@@ -581,14 +581,14 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 2px;
-      min-height: 26px;
+      gap: 3px;
+      min-height: 28px;
       flex-wrap: wrap;
       z-index: 3;
     }
 
     .token {
-      font-size: clamp(1.1rem, 1.8vw, 1.45rem);
+      font-size: clamp(1.2rem, 2.1vw, 2.1rem);
       line-height: 1;
       filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35));
       position: relative;
@@ -604,9 +604,9 @@
       bottom: -4px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 0.46rem;
+      font-size: clamp(0.46rem, 0.65vw, 0.68rem);
       font-weight: 900;
-      padding: 0px 3px;
+      padding: 0px 4px;
       border-radius: 4px;
       color: white;
       white-space: nowrap;
