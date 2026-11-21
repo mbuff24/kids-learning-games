@@ -6,6 +6,7 @@ A collection of interactive HTML/JavaScript board games and study guides designe
 2. **🦈 [Race to the Pirate Ship!](./shark-pirate-race/index.html)** — 1–2 players vs. the Hungry Shark on a 50-space ocean map with Giant Octopus traps and Treasure Chest dice upgrades.
 3. **🍕 [Pizza Chef Party!](./pizza-chef-game/index.html)** — 2-player pizza-building board game over 8 turns with live visual pizza pans, doubles bonuses, and a final Bake-Off judging.
 4. **🦉 [Fundations Unit 4 Review Adventure!](./fundations-unit-4/index.html)** — Interactive 2nd grade phonics & spelling practice (Scoop Baseword & Circle Suffix, Three Sounds of `-ed`, Trick Words, Capitalization & Punctuation, and voice audio).
+5. **🦉 [Fundations Unit 5 Review Adventure!](./fundations-unit-5/index.html)** — Interactive 2nd grade phonics & spelling practice (Multisyllabic Syllable Scooping, Underline Baseword & Circle Suffix, `-ick` vs. `-ic` Rule, Suffixes `-ful, -less, -ness, -ment, -ish, -en, -able`, and Unit 5 Test Trick Words).
 
 ## Running Locally
 
