@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Zoom & Snap! Camera Ready Party 📸🔍</title>
+  <style>
+    :root {
+      --p1-color: #2563eb;
+      --p1-light: #dbeafe;
+      --p2-color: #e11d48;
+      --p2-light: #ffe4e6;
+      --gold: #f59e0b;
+      --green: #16a34a;
+      --dark: #0f172a;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Rounded Mplus 1c', system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      max-height: 100vh;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e3a8a 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 300;
+    }
+
+    /* Camera Flash Overlay */
+    .flash-overlay {
+      position: fixed;
+      inset: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 250;
+      transition: opacity 0.06s ease-out;
+    }
+
+    .flash-overlay.flash {
+      opacity: 0.92;
+    }
+
+    /* Header */
+    header {
+      width: 96%;
+      max-width: 2200px;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--dark);
+      border-bottom: 4px solid var(--gold);
+      border-radius: 0 0 22px 22px;
+      padding: clamp(6px, 1vh, 14px) clamp(16px, 2vw, 30px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: clamp(1.25rem, 2vw, 2rem);
+      color: #1e1b4b;
+    }
+
+    .round-badge {
+      background: #fef3c7;
+      border: 2.5px solid var(--gold);
+      color: #b45309;
+      padding: 4px 14px;
+      border-radius: 30px;
+      font-weight: 900;
+      font-size: clamp(0.85rem, 1.2vw, 1.1rem);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mode-switch {
+      display: flex;
+      background: #e2e8f0;
+      border: 2px solid #64748b;
+      border-radius: 50px;
+      padding: 2px;
+      gap: 4px;
+    }
+
+    .mode-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 14px;
+      border-radius: 50px;
+      font-weight: 900;
+      font-size: 0.85rem;
+      color: #334155;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: var(--p1-color);
+      color: white;
+    }
+
+    .top-btn {
+      background: #fffbeb;
+      border: 2px solid var(--gold);
+      border-radius: 50px;
+      padding: 5px 14px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #92400e;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #d97706;
+      text-decoration: none;
+    }
+
+    .top-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #d97706;
+    }
+
+    /* Main Widescreen Layout (13" MacBook Pro up to 27" Monitor) */
+    main {
+      width: 96%;
+      max-width: 2200px;
+      flex: 1;
+      min-height: 0;
+      padding: clamp(8px, 1.2vh, 18px) 0;
+      display: grid;
+      grid-template-columns: clamp(320px, 24vw, 430px) 1fr;
+      gap: clamp(12px, 1.5vw, 24px);
+      align-items: stretch;
+    }
+
+    /* Left Sidebar: Wanted Target Card, Scoreboard, and Latest Polaroid */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .wanted-card {
+      background: #fffbeb;
+      color: var(--dark);
+      border: 5px solid var(--gold);
+      border-radius: 24px;
+      padding: 12px 14px;
+      text-align: center;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wanted-header {
+      font-size: 0.85rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: #f59e0b;
+      color: white;
+      padding: 2px 12px;
+      border-radius: 20px;
+    }
+
+    .wanted-preview-box {
+      width: 110px;
+      height: 110px;
+      background: radial-gradient(circle, #ffffff 40%, #fde68a 100%);
+      border: 4px dashed #d97706;
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 2px 0;
+    }
+
+    .wanted-desc {
+      font-size: clamp(0.95rem, 1.2vw, 1.15rem);
+      font-weight: 900;
+      color: #78350f;
+      line-height: 1.25;
+    }
+
+    /* Players Score & Controls Cards */
+    .players-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .p-card {
+      background: rgba(255, 255, 255, 0.94);
+      color: var(--dark);
+      border: 4px solid #cbd5e1;
+      border-radius: 18px;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .p-card.p1-card { border-color: var(--p1-color); background: var(--p1-light); }
+    .p-card.p2-card { border-color: var(--p2-color); background: var(--p2-light); }
+
+    .p-name-input {
+      border: 2px dashed rgba(0,0,0,0.25);
+      background: rgba(255,255,255,0.75);
+      border-radius: 8px;
+      font-weight: 900;
+      font-size: 0.95rem;
+      padding: 2px 6px;
+      width: 115px;
+      color: var(--dark);
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .p-controls-hint {
+      font-size: 0.72rem;
+      font-weight: bold;
+      color: #475569;
+      margin-top: 2px;
+    }
+
+    .p-score-pill {
+      font-size: 1.2rem;
+      font-weight: 900;
+      padding: 4px 12px;
+      border-radius: 14px;
+      color: white;
+    }
+
+    .p1-card .p-score-pill { background: var(--p1-color); }
+    .p2-card .p-score-pill { background: var(--p2-color); }
+
+    /* Live Polaroid Snapshot Preview Box */
+    .polaroid-box {
+      flex: 1;
+      background: #ffffff;
+      color: var(--dark);
+      border-radius: 20px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+      border: 4px solid #e2e8f0;
+      min-height: 0;
+    }
+
+    .polaroid-frame {
+      width: 100%;
+      flex: 1;
+      background: #f1f5f9;
+      border: 3px solid #cbd5e1;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      min-height: 95px;
+    }
+
+    .polaroid-caption {
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #334155;
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    /* Right Stage: Interactive Bustling Scene Canvas */
+    .scene-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 28px;
+      border: 6px solid #facc15;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+      cursor: none; /* Replaced by Player 1's Camera Viewfinder! */
+      background: #86efac;
+    }
+
+    #scene-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .scene-hud-banner {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.82);
+      color: #fef08a;
+      border: 2px solid #facc15;
+      padding: 6px 20px;
+      border-radius: 30px;
+      font-weight: 900;
+      font-size: clamp(0.95rem, 1.4vw, 1.25rem);
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 15;
+    }
+
+    /* End of Game Photo Album Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.82);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 260;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #fffbeb;
+      color: var(--dark);
+      border: 7px solid var(--gold);
+      border-radius: 32px;
+      padding: 22px 28px;
+      max-width: 920px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .album-polaroid {
+      background: white;
+      border: 3px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 8px 8px 12px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transform: rotate(-1.5deg);
+    }
+
+    .album-polaroid:nth-child(even) {
+      transform: rotate(1.8deg);
+    }
+
+    .album-polaroid img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #e2e8f0;
+      background: #e0f2fe;
+    }
+
+    .album-polaroid .alb-tag {
+      font-size: 0.76rem;
+      font-weight: 900;
+      color: #1e293b;
+    }
+
+    .play-again-btn {
+      background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+      border: 4px solid #dcfce7;
+      border-radius: 50px;
+      padding: 10px 32px;
+      font-size: 1.35rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #15803d;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti-canvas"></canvas>
+  <div class="flash-overlay" id="flash-overlay"></div>
+
+  <header>
+    <div class="title-wrap">
+      <h1>📸 Zoom & Snap! Camera Party</h1>
+      <span class="round-badge" id="round-badge">Round 1 of 5</span>
+    </div>
+    <div class="header-controls">
+      <div class="mode-switch">
+        <button class="mode-btn" id="btn-1p" onclick="setPlayerMode(1)">1 Photographer</button>
+        <button class="mode-btn active" id="btn-2p" onclick="setPlayerMode(2)">2 Photographers</button>
+      </div>
+      <button class="top-btn" id="sound-btn" onclick="toggleSound()">🔊 Sound On</button>
+      <button class="top-btn" onclick="startNewGame()">🔄 New Photo Shoot</button>
+      <a class="top-btn" href="../index.html">🏠 Arcade</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="sidebar">
+      <!-- Target Character Card -->
+      <div class="wanted-card">
+        <span class="wanted-header">🎯 SNAP THIS VIP TARGET!</span>
+        <div class="wanted-preview-box">
+          <canvas id="target-preview-canvas" width="100" height="100"></canvas>
+        </div>
+        <div class="wanted-desc" id="wanted-desc">
+          Find the Monster wearing a Crown & Holding Pizza!
+        </div>
+      </div>
+
+      <!-- Players Score & Controls -->
+      <div class="players-panel">
+        <div class="p-card p1-card">
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span>🔵📸</span>
+              <input type="text" class="p-name-input" id="p1-name" value="Photographer 1" maxlength="14" oninput="updateNames()" />
+            </div>
+            <div class="p-controls-hint">🖱️ Mouse + Click (or WASD + Space)</div>
+          </div>
+          <div class="p-score-pill" id="p1-score">0 pts</div>
+        </div>
+
+        <div class="p-card p2-card" id="p2-card">
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span>🔴📸</span>
+              <input type="text" class="p-name-input" id="p2-name" value="Photographer 2" maxlength="14" oninput="updateNames()" />
+            </div>
+            <div class="p-controls-hint">⌨️ Arrow Keys + Enter (or Shift)</div>
+          </div>
+          <div class="p-score-pill" id="p2-score">0 pts</div>
+        </div>
+      </div>
+
+      <!-- Latest Polaroid Snapshot Preview -->
+      <div class="polaroid-box">
+        <div style="font-size:0.8rem;font-weight:900;color:#64748b;text-transform:uppercase;">🖼️ Latest Snapshot</div>
+        <div class="polaroid-frame" id="polaroid-frame">
+          <span style="color:#94a3b8;font-weight:bold;font-size:0.85rem;">Aim your camera lens & SNAP!</span>
+        </div>
+        <div class="polaroid-caption" id="polaroid-caption">Center the VIP inside your lens for 100 pts!</div>
+      </div>
+    </div>
+
+    <!-- Main Bustling Scene -->
+    <div class="scene-container" id="scene-container">
+      <div class="scene-hud-banner" id="scene-hud">
+        🔍 Find the VIP Target in the crowd! Wait until they face the camera & SNAP!
+      </div>
+      <canvas id="scene-canvas"></canvas>
+    </div>
+  </main>
+
+  <!-- Photo Album Victory Modal -->
+  <div class="modal-overlay" id="album-modal">
+    <div class="modal-card">
+      <h2 style="margin:0;font-size:2rem;color:#1e1b4b;" id="winner-title">📸 PHOTO SHOOT COMPLETE! 🏆</h2>
+      <p style="margin:4px 0 10px;font-weight:bold;color:#475569;font-size:1.15rem;" id="winner-subtitle">
+        Check out your 5-Round Party Photo Album!
+      </p>
+
+      <div class="album-grid" id="album-grid"></div>
+
+      <button class="play-again-btn" onclick="startNewGame()">📸 Play Another Photo Shoot!</button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // CHARACTER PARTS & SCENE THEMES
+    // =========================================================================
+    const BODIES = [
+      { emoji: '🦖', name: 'Dino' },
+      { emoji: '🐙', name: 'Octopus' },
+      { emoji: '🦊', name: 'Fox' },
+      { emoji: '🐼', name: 'Panda' },
+      { emoji: '🦄', name: 'Unicorn' },
+      { emoji: '🐸', name: 'Frog' },
+      { emoji: '🦁', name: 'Lion' },
+      { emoji: '🐧', name: 'Penguin' },
+      { emoji: '🐨', name: 'Koala' },
+      { emoji: '🐯', name: 'Tiger' }
+    ];
+
+    const HATS = [
+      { emoji: '👑', name: 'Golden Crown' },
+      { emoji: '🎩', name: 'Top Hat' },
+      { emoji: '🤠', name: 'Cowboy Hat' },
+      { emoji: '🎓', name: 'Grad Cap' },
+      { emoji: '🧢', name: 'Blue Cap' },
+      { emoji: '🎀', name: 'Pink Bow' }
+    ];
+
+    const PROPS = [
+      { emoji: '🍕', name: 'Pizza Slice' },
+      { emoji: '🎈', name: 'Red Balloon' },
+      { emoji: '🎸', name: 'Rock Guitar' },
+      { emoji: '🍦', name: 'Ice Cream' },
+      { emoji: '🍩', name: 'Sprinkle Donut' },
+      { emoji: '🏆', name: 'Gold Trophy' }
+    ];
+
+    const SCENE_THEMES = [
+      { name: 'Sunny Park Party', bg1: '#86efac', bg2: '#4ade80', decors: ['🌳', '🌻', '🌷', '🍄', '⛲'] },
+      { name: 'Pirate Beach Cove', bg1: '#fde68a', bg2: '#38bdf8', decors: ['🌴', '🐚', '🦀', '⚓', '🏝️'] },
+      { name: 'Starlight Carnival', bg1: '#e9d5ff', bg2: '#c084fc', decors: ['🎪', '🎡', '🍿', '🎠', '✨'] },
+      { name: 'Pizza Festival Plaza', bg1: '#fed7aa', bg2: '#fb923c', decors: ['🏛️', '🪴', '🧀', '🍅', '🎶'] },
+      { name: 'Snowy Mountain Resort', bg1: '#e0f2fe', bg2: '#bae6fd', decors: ['🌲', '⛄', '❄️', '🏔️', '🛷'] }
+    ];
+
+    // =========================================================================
+    // GAME STATE
+    // =========================================================================
+    const TOTAL_ROUNDS = 5;
+    let numPlayers = 2;
+    let currentRound = 1;
+    let soundEnabled = true;
+    let roundActive = false;
+
+    let players = [
+      { id: 1, name: 'Photographer 1', score: 0, x: 250, y: 250, color: '#2563eb', cooldown: 0 },
+      { id: 2, name: 'Photographer 2', score: 0, x: 550, y: 250, color: '#e11d48', cooldown: 0 }
+    ];
+
+    let characters = [];
+    let targetSpec = null;
+    let bgDecors = [];
+    let albumSnapshots = [];
+    let keysDown = {};
+
+    const sceneContainer = document.getElementById('scene-container');
+    const sceneCanvas = document.getElementById('scene-canvas');
+    const sceneCtx = sceneCanvas.getContext('2d');
+    const previewCanvas = document.getElementById('target-preview-canvas');
+    const previewCtx = previewCanvas.getContext('2d');
+    const flashOverlay = document.getElementById('flash-overlay');
+
+    // =========================================================================
+    // AUDIO SYNTHESIZER (Camera Shutter, Beeps, Cheers)
+    // =========================================================================
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playShutterSound() {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        // White noise burst for real camera shutter click
+        const bufferSize = ctx.sampleRate * 0.08;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.02));
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        noise.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start();
+      } catch (e) {}
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.14, vol = 0.22) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(vol, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playSnapSuccess() {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+        setTimeout(() => playTone(f, 'triangle', 0.15, 0.26), i * 85);
+      });
+    }
+
+    function playMissBuzz() {
+      playTone(190, 'sawtooth', 0.16, 0.18);
+    }
+
+    function speak(text) {
+      if (!soundEnabled || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        setTimeout(() => {
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'en-US';
+          u.rate = 0.98;
+          window.speechSynthesis.speak(u);
+        }, 30);
+      } catch (e) {}
+    }
+
+    window.toggleSound = function() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-btn').textContent = soundEnabled ? '🔊 Sound On' : '🔇 Muted';
+      if (!soundEnabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    };
+
+    // =========================================================================
+    // SETUP ROUND & UNIQUE TARGET CHARACTER
+    // =========================================================================
+    function resizeSceneCanvas() {
+      const rect = sceneContainer.getBoundingClientRect();
+      sceneCanvas.width = rect.width;
+      sceneCanvas.height = rect.height;
+    }
+    window.addEventListener('resize', resizeSceneCanvas);
+
+    window.setPlayerMode = function(mode) {
+      numPlayers = mode;
+      document.getElementById('btn-1p').classList.toggle('active', mode === 1);
+      document.getElementById('btn-2p').classList.toggle('active', mode === 2);
+      document.getElementById('p2-card').style.display = mode === 2 ? 'flex' : 'none';
+      startNewGame();
+    };
+
+    window.updateNames = function() {
+      players[0].name = document.getElementById('p1-name').value.trim() || 'Photographer 1';
+      players[1].name = document.getElementById('p2-name').value.trim() || 'Photographer 2';
+    };
+
+    function setupRound() {
+      resizeSceneCanvas();
+      const W = sceneCanvas.width || 800;
+      const H = sceneCanvas.height || 550;
+
+      document.getElementById('round-badge').textContent = `Round ${currentRound} of ${TOTAL_ROUNDS}`;
+
+      // Pick unique target combination
+      const tBody = BODIES[Math.floor(Math.random() * BODIES.length)];
+      const tHat  = HATS[Math.floor(Math.random() * HATS.length)];
+      const tProp = PROPS[Math.floor(Math.random() * PROPS.length)];
+
+      targetSpec = { body: tBody, hat: tHat, prop: tProp };
+
+      document.getElementById('wanted-desc').innerHTML =
+        `Find the <strong>${tBody.name} (${tBody.emoji})</strong> wearing a <strong>${tHat.name} (${tHat.emoji})</strong> & holding a <strong>${tProp.name} (${tProp.emoji})</strong>!`;
+
+      drawTargetPreview();
+
+      // Build background scenery decors
+      const theme = SCENE_THEMES[(currentRound - 1) % SCENE_THEMES.length];
+      bgDecors = Array.from({ length: 18 }, () => ({
+        x: 50 + Math.random() * (W - 100),
+        y: 70 + Math.random() * (H - 120),
+        emoji: theme.decors[Math.floor(Math.random() * theme.decors.length)],
+        size: 28 + Math.random() * 18
+      }));
+
+      // Spawn 20 bustling characters (1 exact VIP target + 19 decoys, some sharing 1 or 2 traits!)
+      characters = [];
+      const totalChars = 20;
+
+      for (let i = 0; i < totalChars; i++) {
+        const isTarget = (i === 0);
+        let body, hat, prop;
+
+        if (isTarget) {
+          body = tBody;
+          hat = tHat;
+          prop = tProp;
+        } else {
+          // Ensure decoys never have all 3 matching traits
+          do {
+            body = (i % 3 === 0) ? tBody : BODIES[Math.floor(Math.random() * BODIES.length)];
+            hat  = (i % 4 === 0) ? tHat  : HATS[Math.floor(Math.random() * HATS.length)];
+            prop = PROPS[Math.floor(Math.random() * PROPS.length)];
+          } while (body.emoji === tBody.emoji && hat.emoji === tHat.emoji && prop.emoji === tProp.emoji);
+        }
+
+        const speed = 1.15 + Math.random() * 1.35;
+        const angle = Math.random() * Math.PI * 2;
+        characters.push({
+          isTarget,
+          body,
+          hat,
+          prop,
+          x: 80 + Math.random() * (W - 160),
+          y: 95 + Math.random() * (H - 160),
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          bobPhase: Math.random() * Math.PI * 2,
+          poseTimer: Math.floor(Math.random() * 160),
+          isPosing: true // When true, faces camera with a sparkle!
+        });
+      }
+
+      // Position camera lenses
+      players[0].x = W * 0.35;
+      players[0].y = H * 0.5;
+      players[1].x = W * 0.65;
+      players[1].y = H * 0.5;
+
+      roundActive = true;
+      document.getElementById('scene-hud').textContent =
+        `📸 Round ${currentRound}: Snap the ${tBody.name} with ${tHat.name} & ${tProp.name}!`;
+    }
+
+    function drawCharacter(ctx, ch, x, y, scale = 1) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      // Soft ground shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+      ctx.beginPath();
+      ctx.ellipse(0, 26, 24, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Golden aura when striking a camera-ready pose!
+      if (ch.isPosing) {
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.75)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 34, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Body Emoji
+      ctx.font = '44px sans-serif';
+      ctx.fillText(ch.body.emoji, 0, 4);
+
+      // Hat Emoji on top
+      ctx.font = '27px sans-serif';
+      ctx.fillText(ch.hat.emoji, 0, -24);
+
+      // Prop Emoji held in hand
+      ctx.font = '25px sans-serif';
+      ctx.fillText(ch.prop.emoji, 24, 10);
+
+      ctx.restore();
+    }
+
+    function drawTargetPreview() {
+      previewCtx.clearRect(0, 0, 100, 100);
+      if (!targetSpec) return;
+      drawCharacter(previewCtx, {
+        body: targetSpec.body,
+        hat: targetSpec.hat,
+        prop: targetSpec.prop,
+        isPosing: true
+      }, 48, 56, 1.05);
+    }
+
+    // =========================================================================
+    // MAIN ANIMATION LOOP & CAMERA VIEWFINDER RENDERING
+    // =========================================================================
+    const LENS_W = 148;
+    const LENS_H = 128;
+
+    function updateAndDrawScene() {
+      const W = sceneCanvas.width;
+      const H = sceneCanvas.height;
+      const theme = SCENE_THEMES[(currentRound - 1) % SCENE_THEMES.length];
+
+      // 1. Move keyboard-controlled viewfinders
+      const moveSpeed = 7;
+      if (keysDown['KeyW']) players[0].y -= moveSpeed;
+      if (keysDown['KeyS']) players[0].y += moveSpeed;
+      if (keysDown['KeyA']) players[0].x -= moveSpeed;
+      if (keysDown['KeyD']) players[0].x += moveSpeed;
+
+      if (numPlayers === 2) {
+        if (keysDown['ArrowUp'])    players[1].y -= moveSpeed;
+        if (keysDown['ArrowDown'])  players[1].y += moveSpeed;
+        if (keysDown['ArrowLeft'])  players[1].x -= moveSpeed;
+        if (keysDown['ArrowRight']) players[1].x += moveSpeed;
+      }
+
+      players.forEach(p => {
+        p.x = Math.max(LENS_W / 2, Math.min(W - LENS_W / 2, p.x));
+        p.y = Math.max(LENS_H / 2, Math.min(H - LENS_H / 2, p.y));
+        if (p.cooldown > 0) p.cooldown--;
+      });
+
+      // 2. Draw Themed Background
+      const grad = sceneCtx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, theme.bg1);
+      grad.addColorStop(1, theme.bg2);
+      sceneCtx.fillStyle = grad;
+      sceneCtx.fillRect(0, 0, W, H);
+
+      // Draw Scenery Decors
+      sceneCtx.textAlign = 'center';
+      sceneCtx.textBaseline = 'middle';
+      bgDecors.forEach(d => {
+        sceneCtx.font = `${d.size}px sans-serif`;
+        sceneCtx.fillText(d.emoji, d.x, d.y);
+      });
+
+      // 3. Update & Draw Characters (sorted by Y for depth)
+      characters.forEach(ch => {
+        if (roundActive) {
+          ch.x += ch.vx;
+          ch.y += ch.vy;
+          ch.bobPhase += 0.12;
+
+          if (ch.x < 55 || ch.x > W - 55) ch.vx *= -1;
+          if (ch.y < 75 || ch.y > H - 55) ch.vy *= -1;
+
+          ch.poseTimer++;
+          if (ch.poseTimer % 180 === 0) {
+            // Occasionally pause and strike a camera pose!
+            ch.isPosing = !ch.isPosing;
+          }
+        }
+      });
+
+      const sortedChars = [...characters].sort((a, b) => a.y - b.y);
+      sortedChars.forEach(ch => {
+        const bobY = Math.sin(ch.bobPhase) * 4;
+        drawCharacter(sceneCtx, ch, ch.x, ch.y + bobY, 1);
+      });
+
+      // 4. Draw Camera Viewfinders on Top
+      drawViewfinder(sceneCtx, players[0], '🔵 P1');
+      if (numPlayers === 2) {
+        drawViewfinder(sceneCtx, players[1], '🔴 P2');
+      }
+
+      requestAnimationFrame(updateAndDrawScene);
+    }
+
+    function drawViewfinder(ctx, player, label) {
+      const x = player.x;
+      const y = player.y;
+      const hw = LENS_W / 2;
+      const hh = LENS_H / 2;
+
+      ctx.save();
+      ctx.strokeStyle = player.color;
+      ctx.lineWidth = 4;
+
+      // Outer rounded viewfinder frame
+      ctx.beginPath();
+      ctx.roundRect(x - hw, y - hh, LENS_W, LENS_H, 16);
+      ctx.stroke();
+
+      // Corner camera brackets & center crosshair
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 16, 0, Math.PI * 2);
+      ctx.moveTo(x - 24, y);
+      ctx.lineTo(x - 10, y);
+      ctx.moveTo(x + 10, y);
+      ctx.lineTo(x + 24, y);
+      ctx.moveTo(x, y - 24);
+      ctx.lineTo(x, y - 10);
+      ctx.moveTo(x, y + 10);
+      ctx.lineTo(x, y + 24);
+      ctx.stroke();
+
+      // Top camera badge
+      ctx.fillStyle = player.color;
+      ctx.beginPath();
+      ctx.roundRect(x - 44, y - hh - 24, 88, 22, 8);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(player.cooldown > 0 ? 'RELOADING...' : `${label} SNAP`, x, y - hh - 13);
+
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // SNAP PHOTO & SCORING LOGIC
+    // =========================================================================
+    function triggerSnap(playerIdx) {
+      if (!roundActive) return;
+      const p = players[playerIdx];
+      if (p.cooldown > 0) return;
+
+      playShutterSound();
+
+      // Flash effect
+      flashOverlay.classList.add('flash');
+      setTimeout(() => flashOverlay.classList.remove('flash'), 90);
+
+      // Check if the VIP Target is inside this player's lens!
+      const targetChar = characters.find(c => c.isTarget);
+      if (!targetChar) return;
+
+      const dx = Math.abs(targetChar.x - p.x);
+      const dy = Math.abs(targetChar.y - p.y);
+      const dist = Math.hypot(dx, dy);
+
+      // Capture the cropped region from the canvas BEFORE viewfinders clutter it
+      const snapDataUrl = captureLensSnapshot(p.x, p.y);
+
+      if (dx <= LENS_W * 0.46 && dy <= LENS_H * 0.46) {
+        // Caught the VIP Target!
+        roundActive = false;
+
+        // Calculate Mario Party style photo score:
+        // - Base 60 pts for framing the target
+        // - Up to +25 pts for dead-center bullseye framing
+        // - +15 pts Camera-Ready Pose Bonus if target had golden aura!
+        const centerBonus = Math.max(5, Math.round(25 * (1 - dist / 85)));
+        const poseBonus = targetChar.isPosing ? 15 : 0;
+        const totalPts = 60 + centerBonus + poseBonus;
+
+        p.score += totalPts;
+        updateScoreUI();
+        playSnapSuccess();
+
+        const ratingText = totalPts >= 90 ? '🌟 PERFECT BULLSEYE POSE!' : '📸 GREAT CATCH!';
+        showPolaroidPreview(snapDataUrl, `${p.name}: +${totalPts} pts! (${ratingText})`);
+
+        albumSnapshots.push({
+          round: currentRound,
+          photographer: p.name,
+          points: totalPts,
+          dataUrl: snapDataUrl,
+          targetName: `${targetSpec.body.emoji}${targetSpec.hat.emoji}${targetSpec.prop.emoji}`
+        });
+
+        document.getElementById('scene-hud').textContent =
+          `🎉 ${p.name} snapped the VIP for +${totalPts} points!`;
+        speak(`${p.name} snapped the photo for ${totalPts} points!`);
+
+        setTimeout(() => {
+          if (currentRound < TOTAL_ROUNDS) {
+            currentRound++;
+            setupRound();
+          } else {
+            showFinalPhotoAlbum();
+          }
+        }, 1600);
+      } else {
+        // Missed or photographed a decoy!
+        p.cooldown = 35; // Brief 0.6s reload so players can't spam-click blindly
+        playMissBuzz();
+        showPolaroidPreview(snapDataUrl, `❌ Oops! Wrong character in ${p.name}'s lens!`);
+      }
+    }
+
+    function captureLensSnapshot(cx, cy) {
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = 150;
+      offCanvas.height = 150;
+      const offCtx = offCanvas.getContext('2d');
+
+      const sx = Math.max(0, Math.min(sceneCanvas.width - LENS_W, cx - LENS_W / 2));
+      const sy = Math.max(0, Math.min(sceneCanvas.height - LENS_H, cy - LENS_H / 2));
+
+      offCtx.drawImage(sceneCanvas, sx, sy, LENS_W, LENS_H, 0, 0, 150, 150);
+      return offCanvas.toDataURL('image/png');
+    }
+
+    function showPolaroidPreview(dataUrl, caption) {
+      const frame = document.getElementById('polaroid-frame');
+      frame.innerHTML = `<img src="${dataUrl}" style="height:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;" alt="Snapshot" />`;
+      document.getElementById('polaroid-caption').textContent = caption;
+    }
+
+    function updateScoreUI() {
+      document.getElementById('p1-score').textContent = `${players[0].score} pts`;
+      document.getElementById('p2-score').textContent = `${players[1].score} pts`;
+    }
+
+    function showFinalPhotoAlbum() {
+      roundActive = false;
+      const titleEl = document.getElementById('winner-title');
+      const subEl = document.getElementById('winner-subtitle');
+
+      if (numPlayers === 1) {
+        titleEl.textContent = `📸 ${players[0].name.toUpperCase()} SCORED ${players[0].score} PTS! 🏆`;
+        subEl.textContent = `Amazing photography skills! Here is your 5-Round Photo Album:`;
+        speak(`Photo shoot complete! You scored ${players[0].score} points!`);
+      } else {
+        if (players[0].score > players[1].score) {
+          titleEl.textContent = `🏆 🔵 ${players[0].name.toUpperCase()} WINS! (${players[0].score} vs ${players[1].score})`;
+          speak(`Hooray! ${players[0].name} wins the photo shoot with ${players[0].score} points!`);
+        } else if (players[1].score > players[0].score) {
+          titleEl.textContent = `🏆 🔴 ${players[1].name.toUpperCase()} WINS! (${players[1].score} vs ${players[0].score})`;
+          speak(`Hooray! ${players[1].name} wins the photo shoot with ${players[1].score} points!`);
+        } else {
+          titleEl.textContent = `🏆 IT'S A PHOTO FINISH TIE! (${players[0].score} pts each)`;
+          speak(`It is a tie! Both photographers scored ${players[0].score} points!`);
+        }
+        subEl.textContent = `Here are the 5 winning VIP snapshots from your match:`;
+      }
+
+      const grid = document.getElementById('album-grid');
+      grid.innerHTML = albumSnapshots.map(snap => `
+        <div class="album-polaroid">
+          <img src="${snap.dataUrl}" alt="Round ${snap.round}" />
+          <div class="alb-tag">Round ${snap.round}: ${snap.targetName}</div>
+          <div style="font-size:0.72rem;color:#16a34a;font-weight:900;">${snap.photographer} (+${snap.points} pts)</div>
+        </div>
+      `).join('');
+
+      startConfetti();
+      document.getElementById('album-modal').classList.add('show');
+    }
+
+    window.startNewGame = function() {
+      stopConfetti();
+      document.getElementById('album-modal').classList.remove('show');
+      updateNames();
+      players[0].score = 0;
+      players[1].score = 0;
+      currentRound = 1;
+      albumSnapshots = [];
+      updateScoreUI();
+      document.getElementById('polaroid-frame').innerHTML =
+        `<span style="color:#94a3b8;font-weight:bold;font-size:0.85rem;">Aim your camera lens & SNAP!</span>`;
+      document.getElementById('polaroid-caption').textContent =
+        `Center the VIP inside your lens for 100 pts!`;
+      setupRound();
+    };
+
+    // =========================================================================
+    // INPUT LISTENERS (Mouse/Trackpad for P1 + Keyboard for P1 & P2)
+    // =========================================================================
+    sceneContainer.addEventListener('mousemove', (e) => {
+      const rect = sceneCanvas.getBoundingClientRect();
+      players[0].x = e.clientX - rect.left;
+      players[0].y = e.clientY - rect.top;
+    });
+
+    sceneContainer.addEventListener('mousedown', (e) => {
+      if (e.button === 0) triggerSnap(0);
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+      keysDown[e.code] = true;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        triggerSnap(0);
+      } else if ((e.code === 'Enter' || e.code === 'ShiftRight') && numPlayers === 2) {
+        e.preventDefault();
+        triggerSnap(1);
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keysDown[e.code] = false;
+    });
+
+    // =========================================================================
+    // CONFETTI
+    // =========================================================================
+    const confCanvas = document.getElementById('confetti-canvas');
+    const confCtx = confCanvas.getContext('2d');
+    let confAnim = null;
+
+    function resizeConfetti() {
+      confCanvas.width = window.innerWidth;
+      confCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeConfetti);
+    resizeConfetti();
+
+    function startConfetti() {
+      const pieces = Array.from({ length: 85 }, () => ({
+        x: Math.random() * confCanvas.width,
+        y: Math.random() * -confCanvas.height,
+        size: 8 + Math.random() * 9,
+        vy: 2.5 + Math.random() * 4,
+        vx: -2 + Math.random() * 4,
+        color: ['#2563eb', '#e11d48', '#f59e0b', '#16a34a', '#a855f7'][Math.floor(Math.random() * 5)],
+        rot: Math.random() * 360
+      }));
+      function loop() {
+        confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+        pieces.forEach(p => {
+          p.y += p.vy;
+          p.x += p.vx;
+          p.rot += 4;
+          if (p.y > confCanvas.height) p.y = -20;
+          confCtx.save();
+          confCtx.translate(p.x, p.y);
+          confCtx.rotate((p.rot * Math.PI) / 180);
+          confCtx.fillStyle = p.color;
+          confCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          confCtx.restore();
+        });
+        confAnim = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    function stopConfetti() {
+      if (confAnim) cancelAnimationFrame(confAnim);
+      confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+    }
+
+    // Launch Game
+    startNewGame();
+    requestAnimationFrame(updateAndDrawScene);
+  </script>
+</body>
+</html>

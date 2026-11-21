@@ -7,6 +7,7 @@ A collection of interactive HTML/JavaScript board games and study guides designe
 3. **🍕 [Pizza Chef Party!](./pizza-chef-game/index.html)** — 2-player pizza-building board game over 8 turns with live visual pizza pans, doubles bonuses, and a final Bake-Off judging.
 4. **🦉 [Fundations Unit 4 Review Adventure!](./fundations-unit-4/index.html)** — Interactive 2nd grade phonics & spelling practice (Scoop Baseword & Circle Suffix, Three Sounds of `-ed`, Trick Words, Capitalization & Punctuation, and voice audio).
 5. **🦉 [Fundations Unit 5 Review Adventure!](./fundations-unit-5/index.html)** — Interactive 2nd grade phonics & spelling practice (Multisyllabic Syllable Scooping, Underline Baseword & Circle Suffix, `-ick` vs. `-ic` Rule, Suffixes `-ful, -less, -ness, -ment, -ish, -en, -able`, and Unit 5 Test Trick Words).
+6. **📸 [Zoom & Snap! Camera Ready Party](./camera-ready-game/index.html)** — Mario Party-style 1–2 player photography mini-game! Find the VIP character wearing the matching hat and holding the matching prop in a bustling crowd, frame them in your camera lens, and review your 5-round Polaroid Photo Album at the end.
 
 ## Running Locally
 
